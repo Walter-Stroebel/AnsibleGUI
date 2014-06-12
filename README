@@ -1,0 +1,35 @@
+This is an editor for basically your Ansible work directory.
+It will scan all the YAML and ASCII text files, descending down the
+sub-directories as needed.
+It should locate and load all playbooks, task, templates and so on and present
+them on the main page.
+You can click on any linked item to open it in a simple plain-text editor.
+Edited files will be saved over the existing ones without any backup; the use
+of a (local) source code repository is strongly recommended alongside this
+editor.
+
+A note on editing YAML files. This editor uses YAMLBeans so you can use any
+YAML features that fall in the sub-set of what is supported by both YAMLBeans
+and Ansible itself.
+When editing a .yml file, it is read using YAMLBeans and converted to text for
+your editing. When you save the edited text, the reverse happens: your text is
+interpreted as being YAML and the resulting object is saved to the file.
+
+This project is in ALPHA (although it is fully functional for *my* set of
+Ansible files) and will quite likely produce some screens filled with
+Java exceptions depending on the complexity of your Ansible projects.
+
+Which is *why* it is releases as Open Source; please feel free to fix bugs,
+create some documentation, add some styling to the horrid white pages and so
+on. All help is welcome!
+
+IDE: NetBeans. 
+Depends on: YAMLBeans.jar, Tomcat 6.0+
+Included: A possible project in its own right, a set of Java classes around the
+DOM interface called JavaHTML. For now I just put those classes in this project.
+
+Hoping to have helped someone out there,
+Regards,
+Walter Stroebel
+InfComTec
+

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<web-app version="3.0" xmlns="http://java.sun.com/xml/ns/javaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://java.sun.com/xml/ns/javaee http://java.sun.com/xml/ns/javaee/web-app_3_0.xsd">
+    <servlet>
+        <description>Edit any file as long as it is ASCII and less then
+about 32 K in size.</description>
+        <servlet-name>EditAny</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.EditAny</servlet-class>
+    </servlet>
+    <servlet>
+        <description>Edit any YAML file.</description>
+        <servlet-name>EditYml</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.EditYml</servlet-class>
+    </servlet>
+    <servlet-mapping>
+        <servlet-name>EditAny</servlet-name>
+        <url-pattern>/EditAny</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>EditYml</servlet-name>
+        <url-pattern>/EditYml</url-pattern>
+    </servlet-mapping>
+    <session-config>
+        <session-timeout>
+            30
+        </session-timeout>
+    </session-config>
+</web-app>
