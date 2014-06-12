@@ -1,5 +1,13 @@
 This is an editor for basically your Ansible work directory.
 
+=======================================================================
+Make sure the Tomcat running this *IS NOT* accessible from outside!!!
+There is no authentication needed and this application accesses any
+files it can. You have been warned. If you know your way around Tomcat,
+you might want to leverage Tomcat user authentication, even if you are
+on your own development network.
+=======================================================================
+
 (Hint: You can save shortcuts like
 http://localhost:8080/Ansible/index.jsp?anspath=/usr/local/ansible/project1
 in your webbrowser for quick access).
