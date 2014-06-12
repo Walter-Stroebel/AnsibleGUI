@@ -22,33 +22,37 @@
     </head>
     <body>
         <form action="index.jsp" method="POST">
+            <% String ansPath = request.getParameter("anspath") != null ? request.getParameter("anspath").trim() : "";%>
+            <input type="text" value="<%=ansPath%>" placeholder="Full path to your ansible files" size="50" name="anspath" />
             <input type="submit" value="Refresh" />
             <input type="submit" name="coll_all_play" value="Collapse all playbooks" />
             <input type="submit" name="expn_all_play" value="Expand all playbooks" />
             <%
-                PlayBooks books = new PlayBooks(new File("/vv/vm/ansible/cimplicity-ansible"));
-                {
-                    JHDocument doc = new JHDocument();
-                    JHFragment top = new JHFragment(doc, "div");
-                    for (PlayBook book : books.playBooks.values()){
-                        book.toHtml(request, top);
-                    }
-                    doc.write(out);
-                }
-                {
-                    JHDocument doc = new JHDocument();
-                    JHFragment top = new JHFragment(doc, "div");
-                    top.appendP("Other (random) files and/or directories");
-                    top.push("table").appendAttr("border", "1");
-                    for (File f : books.randomFiles) {
-                        if (f.isDirectory()) {
-                            top.createElement("tr").appendTD(f.getAbsolutePath() + " (dir)");
-                        } else {
-                            top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", f.getAbsolutePath());
+                if (!ansPath.isEmpty()) {
+                    PlayBooks books = new PlayBooks(new File(ansPath));
+                    {
+                        JHDocument doc = new JHDocument();
+                        JHFragment top = new JHFragment(doc, "div");
+                        for (PlayBook book : books.playBooks.values()) {
+                            book.toHtml(request, top);
                         }
+                        doc.write(out);
                     }
-                    top.pop();
-                    doc.write(out);
+                    {
+                        JHDocument doc = new JHDocument();
+                        JHFragment top = new JHFragment(doc, "div");
+                        top.appendP("Other (random) files and/or directories");
+                        top.push("table").appendAttr("border", "1");
+                        for (File f : books.randomFiles) {
+                            if (f.isDirectory()) {
+                                top.createElement("tr").appendTD(f.getAbsolutePath() + " (dir)");
+                            } else {
+                                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", f.getAbsolutePath());
+                            }
+                        }
+                        top.pop();
+                        doc.write(out);
+                    }
                 }
             %>        
         </form>

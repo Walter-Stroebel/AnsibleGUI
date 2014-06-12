@@ -1,6 +1,12 @@
 This is an editor for basically your Ansible work directory.
+
+(Hint: You can save shortcuts like
+http://localhost:8080/Ansible/index.jsp?anspath=/usr/local/ansible/project1
+in your webbrowser for quick access).
+
 It will scan all the YAML and ASCII text files, descending down the
-sub-directories as needed.
+sub-directories as needed. Note that the Tomcat user *must* have read/write
+access to all the files and directories for this to work!
 It should locate and load all playbooks, task, templates and so on and present
 them on the main page.
 You can click on any linked item to open it in a simple plain-text editor.
@@ -24,9 +30,10 @@ create some documentation, add some styling to the horrid white pages and so
 on. All help is welcome!
 
 IDE: NetBeans. 
-Depends on: YAMLBeans.jar, Tomcat 6.0+
+Depends on: YAMLBeans.jar, Tomcat 6.0+, Java 7+
 Included: A possible project in its own right, a set of Java classes around the
 DOM interface called JavaHTML. For now I just put those classes in this project.
+Tested on: Tomcat6 & 7, OpenJDK 7, my current set of Ansible files.
 
 Hoping to have helped someone out there,
 Regards,
