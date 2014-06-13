@@ -4,12 +4,14 @@
  */
 package nl.infcomtec.ansible;
 
+import com.esotericsoftware.yamlbeans.YamlConfig;
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.io.Writer;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -61,11 +63,13 @@ public class EditYml extends HttpServlet {
             File f = new File(fnam);
             AnsObject o = new AnsObject(f, new FileReader(f));
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
-            StringWriter tmp = new StringWriter();
-            YamlWriter writer = new YamlWriter(tmp);
+            YamlConfig config = new YamlConfig();
+            config.writeConfig.setWrapColumn(150);
+            MyWriter toHtml = new MyWriter();
+            YamlWriter writer = new YamlWriter(toHtml, config);
             writer.write(o.object);
             writer.close();
-            out.println(JHFragment.html(tmp.toString()));
+            out.println(toHtml.toString());
             out.println("</textarea><br />");
             out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");
             out.println("</form>");
@@ -112,5 +116,34 @@ public class EditYml extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+
+    private static class MyWriter extends Writer {
+        private final StringBuilder out;
+        public MyWriter() {
+            out=new StringBuilder();
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            out.append(cbuf, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void close() throws IOException {
+            for (int dash = out.indexOf("\n-");dash!=-1;dash=out.indexOf("\n-", dash)) {
+                out.insert(dash, '\n');
+                dash+=3;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return JHFragment.html(out.toString());
+        }
+    }
 
 }
