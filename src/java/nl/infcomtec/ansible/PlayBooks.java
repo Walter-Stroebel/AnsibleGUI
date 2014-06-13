@@ -12,9 +12,10 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
+import java.util.TreeSet;
 import java.util.UUID;
+import nl.infcomtec.javahtml.JHFragment;
 
 /**
  *
@@ -26,10 +27,38 @@ public class PlayBooks {
     public final TreeMap<String, Role> roles = new TreeMap<>();
     public final LinkedList<File> randomFiles = new LinkedList<>();
     public final File directory;
+    public final TreeMap<String, Variable> vars = new TreeMap<>();
 
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
         this.directory = directory;
         scan(directory);
+    }
+
+    public void toHtml(JHFragment top, TreeMap<String, Variable> vars) {
+        top.push("tr");
+        top.appendTD("Var");
+        top.appendTD("Value(s)");
+        top.appendTD("Defined in");
+        top.appendTD("Used by");
+        top.pop();
+        for (Variable e : vars.values()) {
+            top.push("tr");
+            top.appendTD(e.name);
+            top.appendTD(e.values.toString());
+            top.push("td");
+            for (File f : e.definedIn) {
+                top.appendA("EditYml?file=" + f.getAbsolutePath(), "_blank", f.getAbsolutePath().substring(directory.getAbsolutePath().length() + 1));
+                top.createElement("br");
+            }
+            top.pop();
+            top.push("td");
+            for (File f : e.usedBy) {
+                top.appendA("EditYml?file=" + f.getAbsolutePath(), "_blank", f.getAbsolutePath().substring(directory.getAbsolutePath().length() + 1));
+                top.createElement("br");
+            }
+            top.pop();
+            top.pop();
+        }
     }
 
     private void scan(File directory) throws YamlException, FileNotFoundException {
@@ -44,6 +73,40 @@ public class PlayBooks {
                             roles(rf);
                         } else {
                             randomFiles.add(rf);
+                        }
+                    }
+                } else if ("host_vars".equals(f.getName())) {
+                    for (File hv : f.listFiles()) {
+                        if (hv.isDirectory()) {
+                            randomFiles.add(hv);
+                        }
+                        AnsObject ao = new AnsObject(hv, new FileReader(hv));
+                        for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
+                            Variable vre = vars.get(e.getKey().toString());
+                            if (vre == null) {
+                                vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
+                                vars.put(e.getKey().toString(), vre);
+                            } else {
+                                vre.definedIn.add(hv);
+                                vre.values.add(e.getValue().toString());
+                            }
+                        }
+                    }
+                } else if ("group_vars".equals(f.getName())) {
+                    for (File hv : f.listFiles()) {
+                        if (hv.isDirectory()) {
+                            randomFiles.add(hv);
+                        }
+                        AnsObject ao = new AnsObject(hv, new FileReader(hv));
+                        for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
+                            Variable vre = vars.get(e.getKey().toString());
+                            if (vre == null) {
+                                vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
+                                vars.put(e.getKey().toString(), vre);
+                            } else {
+                                vre.definedIn.add(hv);
+                                vre.values.add(e.getValue().toString());
+                            }
                         }
                     }
                 } else {
@@ -120,8 +183,15 @@ public class PlayBooks {
                         for (File ts : rd.listFiles()) {
                             if (ts.getName().endsWith(".yml")) {
                                 AnsObject var = new AnsObject(ts, new FileReader(ts));
-                                for (Map.Entry<?, ?> e : (Set<Map.Entry<?, ?>>) var.getMap().entrySet()) {
-                                    role.vars.put(e.getKey().toString(), new RoleFileString(ts, e.getValue().toString()));
+                                for (Map.Entry<Object, Object> e : var.getMap().entrySet()) {
+                                    Variable vre = vars.get(e.getKey().toString());
+                                    if (vre == null) {
+                                        vre = new Variable(ts, e.getKey().toString(), e.getValue().toString());
+                                    } else {
+                                        vre.definedIn.add(ts);
+                                        vre.values.add(e.getValue().toString());
+                                    }
+                                    role.vars.put(e.getKey().toString(), vre);
                                 }
                             } else {
                                 randomFiles.add(ts);
@@ -135,6 +205,25 @@ public class PlayBooks {
             } else {
                 randomFiles.add(rd);
             }
+        }
+    }
+
+    public static class Variable {
+
+        public final TreeSet<File> definedIn = new TreeSet<>();
+        public final TreeSet<File> usedBy = new TreeSet<>();
+        public final String name;
+        public final TreeSet<String> values = new TreeSet<>();
+
+        public Variable(String name, String value) {
+            this.name = name;
+            this.values.add(value);
+        }
+
+        public Variable(File definer, String name, String value) {
+            definedIn.add(definer);
+            this.name = name;
+            this.values.add(value);
         }
     }
 

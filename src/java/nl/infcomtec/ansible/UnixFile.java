@@ -10,6 +10,7 @@ import java.io.InputStreamReader;
 
 /**
  * Java interface to the Unix/Linux file(1) command.
+ *
  * @author walter
  */
 public class UnixFile {
@@ -36,7 +37,7 @@ public class UnixFile {
         return "???";
     }
 
-    public static boolean isItASCII(File f){
+    public static boolean isItASCII(File f) {
         return whatsThatFile(f).contains("ASCII");
     }
 }

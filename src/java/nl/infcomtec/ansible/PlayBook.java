@@ -49,9 +49,20 @@ public class PlayBook {
                             System.out.println(rmap);
                             String rname = (String) rmap.remove("role");
                             l.add(rname);
-                            Role parRole = new Role(rname);
+                            Role parRole = owner.roles.get(rname);
+                            if (parRole == null) {
+                                parRole = new Role(rname);
+                            }
                             for (Map.Entry<String, Object> e : rmap.entrySet()) {
-                                parRole.vars.put(e.getKey(), new RoleFileString(f, e.getValue().toString()));
+                                PlayBooks.Variable vre = parRole.vars.get(e.getKey());
+                                if (vre == null) {
+                                    vre = new PlayBooks.Variable(f, e.getKey(), e.getValue().toString());
+                                } else {
+                                    vre.definedIn.add(f);
+                                    vre.values.add(e.getValue().toString());
+                                }
+                                vre.usedBy.add(f);
+                                parRole.vars.put(e.getKey(), vre);
                             }
                             owner.roles.put(rname, parRole);
                             //System.out.println(rmap);
@@ -156,9 +167,12 @@ public class PlayBook {
                         }
                         top.pop();
                         top.push("td");
-                        for (Map.Entry<String, RoleFileString> e : rd.vars.entrySet()) {
-                            top.appendA("EditYml?file=" + e.getValue().file.getAbsolutePath(), "_blank", e.getKey());
-                            top.createElement("br");
+                        if (!rd.vars.isEmpty()) {
+        top.push("table").appendAttr("border", "1");
+                            owner.toHtml(top, rd.vars);
+                            top.pop();
+                        } else {
+                            top.appendText("-");
                         }
                         top.pop();
                     } else {

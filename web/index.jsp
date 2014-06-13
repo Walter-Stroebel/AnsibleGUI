@@ -12,24 +12,24 @@
 <%@page import="nl.infcomtec.javahtml.JHDocument"%>
 <%@page import="java.io.File"%>
 <%@page contentType="text/html" pageEncoding="UTF-8"%>
-            <%
-                String ansPath = request.getParameter("anspath") != null ? request.getParameter("anspath").trim() : "";
-                boolean hasGIT = false;
-                if (ansPath.isEmpty()){
-                    if (session.getAttribute("anspath")!=null){
-                        ansPath=session.getAttribute("anspath").toString();
-                    }
-                } else {
-                    session.setAttribute("anspath", ansPath);
-                }
-                if (!ansPath.isEmpty()) {
-                    File git = new File (ansPath,".git");
-                    hasGIT=git.exists()&&git.isDirectory();                        
-                }
-                if (hasGIT && request.getParameter("GIT")!=null){
-                    response.sendRedirect("MiniGIT");
-                }
-            %>
+<%
+    String ansPath = request.getParameter("anspath") != null ? request.getParameter("anspath").trim() : "";
+    boolean hasGIT = false;
+    if (ansPath.isEmpty()) {
+        if (session.getAttribute("anspath") != null) {
+            ansPath = session.getAttribute("anspath").toString();
+        }
+    } else {
+        session.setAttribute("anspath", ansPath);
+    }
+    if (!ansPath.isEmpty()) {
+        File git = new File(ansPath, ".git");
+        hasGIT = git.exists() && git.isDirectory();
+    }
+    if (hasGIT && request.getParameter("GIT") != null) {
+        response.sendRedirect("MiniGIT");
+    }
+%>
 <!DOCTYPE html>
 <html>
     <head>
@@ -54,6 +54,15 @@
                         for (PlayBook book : books.playBooks.values()) {
                             book.toHtml(request, top);
                         }
+                        doc.write(out);
+                    }
+                    {
+                        JHDocument doc = new JHDocument();
+                        JHFragment top = new JHFragment(doc, "div");
+                        top.appendP("List of all variables");
+                        top.push("table").appendAttr("border", "1");
+                        books.toHtml(top, books.vars);
+                        top.pop();
                         doc.write(out);
                     }
                     {

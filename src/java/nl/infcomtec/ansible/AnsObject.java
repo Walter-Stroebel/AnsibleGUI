@@ -19,38 +19,38 @@ import nl.infcomtec.javahtml.JHFragment;
  * @author walter
  */
 public class AnsObject {
-    
+
     public final Object object;
     public final File inFile;
-    
+
     public AnsObject(final File inFile, final FileReader fileReader) throws YamlException {
         YamlReader reader = new YamlReader(fileReader);
         this.object = reader.read();
         this.inFile = inFile;
     }
-    
+
     public AnsObject(final File inFile, String yaml) throws YamlException {
         YamlReader reader = new YamlReader(yaml);
         this.object = reader.read();
         this.inFile = inFile;
     }
-    
-    public Map getMap() {
+
+    public Map<Object, Object> getMap() {
         if (object instanceof Map) {
             return (Map) object;
         }
         return null;
     }
-    
+
     private static void toHtml(HttpServletRequest request, JHFragment top, List l) {
         for (Object e : l) {
             top.push("li");
             toHtml(request, top, e);
             top.pop();
         }
-        
+
     }
-    
+
     private static void toHtml(HttpServletRequest request, JHFragment top, Set<Map.Entry> set) {
         for (Map.Entry e : set) {
             top.push("li");
