@@ -5,6 +5,7 @@
 package nl.infcomtec.ansible;
 
 import com.esotericsoftware.yamlbeans.YamlConfig;
+import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
@@ -37,8 +38,16 @@ public class EditYml extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("text/html;charset=UTF-8");
         String fnam = request.getParameter("file");
+        File f = new File(fnam);
+        AnsObject o;
+        try {
+            o = new AnsObject(f, new FileReader(f));
+        } catch (YamlException ex) {
+            response.sendRedirect("EditAny?file=" + fnam);
+            return;
+        }
+        response.setContentType("text/html;charset=UTF-8");
         if (request.getParameter("save") != null) {
             try (PrintWriter pw = new PrintWriter(new File(fnam))) {
                 pw.print(request.getParameter("edit"));
@@ -49,10 +58,10 @@ public class EditYml extends HttpServlet {
             out.println("<html>");
             out.println("<head>");
             String title;
-            if (fnam.length()>28){
-                title=fnam.substring(fnam.length()-28);
+            if (fnam.length() > 28) {
+                title = fnam.substring(fnam.length() - 28);
             } else {
-                title=fnam;
+                title = fnam;
             }
             out.println("<title>" + title + "</title>");
             out.println("</head>");
@@ -60,8 +69,6 @@ public class EditYml extends HttpServlet {
             out.println("<form action=\"EditYml\" method=\"POST\">");
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
             out.println("<h1>" + fnam + "</h1>");
-            File f = new File(fnam);
-            AnsObject o = new AnsObject(f, new FileReader(f));
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
             YamlConfig config = new YamlConfig();
             config.writeConfig.setWrapColumn(150);
@@ -118,9 +125,11 @@ public class EditYml extends HttpServlet {
     }// </editor-fold>
 
     private static class MyWriter extends Writer {
+
         private final StringBuilder out;
+
         public MyWriter() {
-            out=new StringBuilder();
+            out = new StringBuilder();
         }
 
         @Override
@@ -134,9 +143,9 @@ public class EditYml extends HttpServlet {
 
         @Override
         public void close() throws IOException {
-            for (int dash = out.indexOf("\n-");dash!=-1;dash=out.indexOf("\n-", dash)) {
+            for (int dash = out.indexOf("\n-"); dash != -1; dash = out.indexOf("\n-", dash)) {
                 out.insert(dash, '\n');
-                dash+=3;
+                dash += 3;
             }
         }
 

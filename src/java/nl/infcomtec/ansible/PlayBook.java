@@ -38,10 +38,26 @@ public class PlayBook {
                 }
             }
             {
-                ArrayList<String> a = (ArrayList<String>) map.remove("roles");
-                if (a != null) {
-                    roles.addAll(a);
+                List<?> rls = (List<?>) map.remove("roles");
+                ArrayList<String> l = new ArrayList<>();
+                for (Object o : rls) {
+                    if (o instanceof String) {
+                        l.add(o.toString());
+                    } else if (o instanceof Map) {
+                        Map<String,Object> rmap = (Map<String,Object>) o;
+                        String rname = (String) rmap.remove("role");
+                        l.add(rname);
+                        Role parRole=new Role(rname);
+                        for (Map.Entry<String, Object> e:rmap.entrySet()){
+                            parRole.vars.put(e.getKey(), new RoleFileString(f, e.getValue().toString()));
+                        }
+                        owner.roles.put(rname, parRole);
+                        //System.out.println(rmap);
+                    } else {
+                        throw new YamlException("If not a list nor a map; what is it?");
+                    }
                 }
+                roles.addAll(l);
             }
             {
                 ArrayList<String> a = (ArrayList<String>) map.remove("tasks");
@@ -63,7 +79,7 @@ public class PlayBook {
             }
             if (!map.isEmpty()) {
                 System.out.println(map);
-                throw new YamlException("Unknown elements found in playbook");
+                // throw new YamlException("Unknown elements found in playbook");
             }
         }
     }

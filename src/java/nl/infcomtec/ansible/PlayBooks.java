@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import java.util.UUID;
 
 /**
  *
@@ -42,7 +43,7 @@ public class PlayBooks {
                         if (rf.isDirectory()) {
                             roles(rf);
                         } else {
-                            throw new YamlException("What is " + rf + " doing in the roles directory?");
+                            randomFiles.add(rf);
                         }
                     }
                 } else {
@@ -51,7 +52,12 @@ public class PlayBooks {
                     }
                 }
             } else if (f.getName().endsWith(".yml")) {
-                AnsObject obj = new AnsObject(f, new FileReader(f));
+                AnsObject obj;
+                try {
+                    obj = new AnsObject(f, new FileReader(f));
+                } catch (YamlException ex) {
+                    obj = new AnsObject(f, "- Error: \"" + ex.getMessage() + "\"");
+                }
                 ArrayList<Map> list = (ArrayList<Map>) obj.object;
                 PlayBook pb = new PlayBook(this, f, list);
                 playBooks.put(f.getName().substring(0, f.getName().length() - 4), pb);
@@ -62,8 +68,11 @@ public class PlayBooks {
     }
 
     private void roles(File roleDir) throws YamlException, FileNotFoundException {
-        Role role = new Role(roleDir.getName());
-        roles.put(roleDir.getName(), role);
+        Role role = roles.get(roleDir.getName());
+        if (role == null) {
+            role = new Role(roleDir.getName());
+            roles.put(roleDir.getName(), role);
+        }
         for (File rd : roleDir.listFiles()) {
             if (rd.isDirectory()) {
                 switch (rd.getName()) {
@@ -73,7 +82,11 @@ public class PlayBooks {
                                 AnsObject task = new AnsObject(aTask, new FileReader(aTask));
                                 List<Map> tasks = (List<Map>) task.object;
                                 for (Map t : tasks) {
-                                    role.tasks.put((String) t.get("name"), new RoleFileMap(aTask, t));
+                                    String tnam = (String) t.get("name");
+                                    if (tnam == null) {
+                                        tnam = UUID.randomUUID().toString();
+                                    }
+                                    role.tasks.put(tnam, new RoleFileMap(aTask, t));
                                 }
                             } else {
                                 randomFiles.add(aTask);
