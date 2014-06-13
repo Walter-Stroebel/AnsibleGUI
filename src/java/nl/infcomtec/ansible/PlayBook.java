@@ -39,25 +39,28 @@ public class PlayBook {
             }
             {
                 List<?> rls = (List<?>) map.remove("roles");
-                ArrayList<String> l = new ArrayList<>();
-                for (Object o : rls) {
-                    if (o instanceof String) {
-                        l.add(o.toString());
-                    } else if (o instanceof Map) {
-                        Map<String,Object> rmap = (Map<String,Object>) o;
-                        String rname = (String) rmap.remove("role");
-                        l.add(rname);
-                        Role parRole=new Role(rname);
-                        for (Map.Entry<String, Object> e:rmap.entrySet()){
-                            parRole.vars.put(e.getKey(), new RoleFileString(f, e.getValue().toString()));
+                if (rls != null) {
+                    ArrayList<String> l = new ArrayList<>();
+                    for (Object o : rls) {
+                        if (o instanceof String) {
+                            l.add(o.toString());
+                        } else if (o instanceof Map) {
+                            Map<String, Object> rmap = (Map<String, Object>) o;
+                            System.out.println(rmap);
+                            String rname = (String) rmap.remove("role");
+                            l.add(rname);
+                            Role parRole = new Role(rname);
+                            for (Map.Entry<String, Object> e : rmap.entrySet()) {
+                                parRole.vars.put(e.getKey(), new RoleFileString(f, e.getValue().toString()));
+                            }
+                            owner.roles.put(rname, parRole);
+                            //System.out.println(rmap);
+                        } else {
+                            throw new YamlException("If not a list nor a map; what is it?");
                         }
-                        owner.roles.put(rname, parRole);
-                        //System.out.println(rmap);
-                    } else {
-                        throw new YamlException("If not a list nor a map; what is it?");
                     }
+                    roles.addAll(l);
                 }
-                roles.addAll(l);
             }
             {
                 ArrayList<String> a = (ArrayList<String>) map.remove("tasks");

@@ -44,15 +44,24 @@ public class EditYml extends HttpServlet {
         try {
             o = new AnsObject(f, new FileReader(f));
         } catch (YamlException ex) {
-            response.sendRedirect("EditAny?file=" + fnam);
+            // not YAML, send to general editor to fix
+            response.sendRedirect("EditAny?warn=true&file=" + fnam);
             return;
         }
-        response.setContentType("text/html;charset=UTF-8");
         if (request.getParameter("save") != null) {
             try (PrintWriter pw = new PrintWriter(new File(fnam))) {
                 pw.print(request.getParameter("edit"));
             }
+            // and reload the file!
+            try {
+                o = new AnsObject(f, new FileReader(f));
+            } catch (YamlException ex) {
+                // not YAML (anymore), send to general editor to fix
+                response.sendRedirect("EditAny?warn=true&file=" + fnam);
+                return;
+            }
         }
+        response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
             out.println("<html>");

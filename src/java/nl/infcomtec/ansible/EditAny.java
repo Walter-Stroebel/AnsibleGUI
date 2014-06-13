@@ -56,13 +56,16 @@ public class EditAny extends HttpServlet {
             out.println("<body>");
             out.println("<form action=\"EditAny\" method=\"POST\">");
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
+            if (request.getParameter("warn") != null) {
+                out.println("<h1 style=\"background-color: red; color: white;\">You were send here from the YAML editor ... fix this file?</h1>");
+            }
             out.println("<h1>" + fnam + "</h1>");
             File f = new File(fnam);
             boolean can = UnixFile.isItASCII(f);
             if (can && f.length() < 32000) {
                 out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
                 try (BufferedReader bfr = new BufferedReader(new FileReader(f))) {
-                    for (String tmp = bfr.readLine();tmp!=null;tmp=bfr.readLine()){
+                    for (String tmp = bfr.readLine(); tmp != null; tmp = bfr.readLine()) {
                         out.println(JHFragment.html(tmp.toString()));
                     }
                 }
