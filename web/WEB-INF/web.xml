@@ -11,6 +11,11 @@ about 32 K in size.</description>
         <servlet-name>EditYml</servlet-name>
         <servlet-class>nl.infcomtec.ansible.EditYml</servlet-class>
     </servlet>
+    <servlet>
+        <description>Very minimal GIT support.</description>
+        <servlet-name>MiniGIT</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.MiniGIT</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>EditAny</servlet-name>
         <url-pattern>/EditAny</url-pattern>
@@ -18,6 +23,10 @@ about 32 K in size.</description>
     <servlet-mapping>
         <servlet-name>EditYml</servlet-name>
         <url-pattern>/EditYml</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>MiniGIT</servlet-name>
+        <url-pattern>/MiniGIT</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

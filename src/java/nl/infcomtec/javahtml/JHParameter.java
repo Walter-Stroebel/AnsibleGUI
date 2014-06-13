@@ -9,15 +9,15 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 /**
- * Form (and/or Session) Parameter.
+ * Form (and/or Session) JHParameter.
  *
  * @author walter
  */
-public class Parameter {
+public class JHParameter {
 
     /**
-     * Prefix used to make a Parameter semi-permanent by storing it in the
-     * Session.
+     * Prefix used to make a JHParameter semi-permanent by storing it in the
+ Session.
      */
     public final static String SESPREFIX = "par_";
     public final String varName;
@@ -25,7 +25,7 @@ public class Parameter {
     public final String[] defValues;
     public final boolean wasSet;
 
-    private Parameter(String varName, String[] values, String[] defValues, boolean wasSet) {
+    private JHParameter(String varName, String[] values, String[] defValues, boolean wasSet) {
         this.varName = varName;
         this.values = values;
         this.defValues = defValues;
@@ -39,7 +39,7 @@ public class Parameter {
      * @param varName Name of the Parameter.
      * @param defValue Default value(s), optional.
      */
-    public Parameter(final HttpServletRequest request, final String varName, final String... defValue) {
+    public JHParameter(final HttpServletRequest request, final String varName, final String... defValue) {
         this(null, request, varName, defValue);
     }
 
@@ -53,7 +53,7 @@ public class Parameter {
      * @param name Name of the Parameter.
      * @param defValue Default value(s), optional.
      */
-    public Parameter(final HttpSession session, final HttpServletRequest request, final String name, final String... defValue) {
+    public JHParameter(final HttpSession session, final HttpServletRequest request, final String name, final String... defValue) {
         this.varName = clean(name);
         this.defValues = defValue;
         values = request.getParameterValues(varName);
@@ -81,16 +81,16 @@ public class Parameter {
         }
     }
 
-    public static Parameter overrideWasSet(Parameter source, boolean wasSet) {
-        return new Parameter(source.varName, source.values, source.defValues, wasSet);
+    public static JHParameter overrideWasSet(JHParameter source, boolean wasSet) {
+        return new JHParameter(source.varName, source.values, source.defValues, wasSet);
     }
 
     /**
-     * Quick test if a Parameter was not entered and did not have a non-empty
-     * default. Do not use this to test a "submit" type Parameter, use wasSet
-     * instead. Note that a multi-value parameter will be returned as "empty".
+     * Quick test if a JHParameter was not entered and did not have a non-empty
+ default. Do not use this to test a "submit" type JHParameter, use wasSet
+ instead. Note that a multi-value parameter will be returned as "empty".
      *
-     * @return True only if a single-value Parameter that has a non-empty value.
+     * @return True only if a single-value JHParameter that has a non-empty value.
      */
     public boolean isEmpty() {
         return values == null || (values.length == 1 && values[0].trim().isEmpty());
@@ -218,7 +218,7 @@ public class Parameter {
     }
 
     /*
-     * For debugging, normally a Parameter is not printed.
+     * For debugging, normally a JHParameter is not printed.
      * @return the contents of this object with automatic entity encoding.
      */
     @Override

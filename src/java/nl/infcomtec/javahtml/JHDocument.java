@@ -70,6 +70,7 @@ public class JHDocument {
         Transformer t = TransformerFactory.newInstance().newTransformer();
         t.setOutputProperty(OutputKeys.METHOD, "html");
         t.setOutputProperty(OutputKeys.OMIT_XML_DECLARATION, "yes");
+        t.setOutputProperty(OutputKeys.INDENT, "yes");
         t.transform(new DOMSource(doc), new StreamResult(out));
     }
 

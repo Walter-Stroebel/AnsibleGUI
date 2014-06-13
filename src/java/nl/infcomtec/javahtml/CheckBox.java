@@ -13,9 +13,9 @@ import org.w3c.dom.Node;
  */
 public class CheckBox extends JHFragment {
 
-    public final Parameter p;
+    public final JHParameter p;
 
-    public CheckBox(Node parent, TreeMap<String, String> style, Parameter p) {
+    public CheckBox(Node parent, TreeMap<String, String> style, JHParameter p) {
         super(parent, style);
         this.p = p;
         appendAttr("name", p.varName).appendAttr("type", "checkbox");

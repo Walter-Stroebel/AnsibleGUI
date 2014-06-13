@@ -29,7 +29,7 @@ public class Select extends Input {
         public abstract boolean next();
     }
 
-    public Select(Node parent, TreeMap<String, String> style, Parameter p) {
+    public Select(Node parent, TreeMap<String, String> style, JHParameter p) {
         super(parent, style, p);
     }
 

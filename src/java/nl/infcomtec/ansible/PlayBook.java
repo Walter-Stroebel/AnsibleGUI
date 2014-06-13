@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import nl.infcomtec.javahtml.JHFragment;
-import nl.infcomtec.javahtml.Parameter;
+import nl.infcomtec.javahtml.JHParameter;
 
 /**
  *
@@ -70,14 +70,14 @@ public class PlayBook {
 
     public void toHtml(HttpServletRequest request, JHFragment top) {
         //System.out.println(request.getParameterMap());
-        Parameter collP = new Parameter(request, "collapse_" + inFile.getName(), "yes");
-        Parameter collAll = new Parameter(request, "coll_all_play");
-        Parameter expnAll = new Parameter(request, "expn_all_play");
+        JHParameter collP = new JHParameter(request, "collapse_" + inFile.getName(), "yes");
+        JHParameter collAll = new JHParameter(request, "coll_all_play");
+        JHParameter expnAll = new JHParameter(request, "expn_all_play");
         if (collAll.wasSet) {
-            collP = Parameter.overrideWasSet(collP, true);
+            collP = JHParameter.overrideWasSet(collP, true);
         }
         if (expnAll.wasSet) {
-            collP = Parameter.overrideWasSet(collP, false);
+            collP = JHParameter.overrideWasSet(collP, false);
         }
         top.createCheckBox(collP).appendAttr("onChange", "this.form.submit()").appendText(" ");
         top.createElement("A").appendAttr("id", inFile.getName());

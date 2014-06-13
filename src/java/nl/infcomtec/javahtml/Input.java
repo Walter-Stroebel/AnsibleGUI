@@ -13,9 +13,9 @@ import org.w3c.dom.Node;
  */
 public class Input extends JHFragment {
 
-    public final Parameter p;
+    public final JHParameter p;
 
-    public Input(Node parent, TreeMap<String, String> style, String type, Parameter p) {
+    public Input(Node parent, TreeMap<String, String> style, String type, JHParameter p) {
         super(parent, style);
         this.p = p;
         appendAttr("name", p.varName).appendAttr("type", type);
@@ -24,7 +24,7 @@ public class Input extends JHFragment {
         }
     }
 
-    protected Input(Node parent, TreeMap<String, String> style, Parameter p) {
+    protected Input(Node parent, TreeMap<String, String> style, JHParameter p) {
         super(parent, style);
         this.p = p;
         appendAttr("name", p.varName);

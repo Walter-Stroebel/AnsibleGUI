@@ -125,21 +125,21 @@ public class JHFragment {
         return ret;
     }
 
-    public Input createInput(String type, Parameter p) {
+    public Input createInput(String type, JHParameter p) {
         Input ret = new Input(current.getOwnerDocument().createElement("INPUT"), style, type, p);
         current.appendChild(ret.current);
         ret.applyStyle();
         return ret;
     }
 
-    public CheckBox createCheckBox(Parameter p) {
+    public CheckBox createCheckBox(JHParameter p) {
         CheckBox ret = new CheckBox(current.getOwnerDocument().createElement("INPUT"), style, p);
         current.appendChild(ret.current);
         ret.applyStyle();
         return ret;
     }
 
-    public Select createSelect(Parameter p) {
+    public Select createSelect(JHParameter p) {
         Select ret = new Select(current.getOwnerDocument().createElement("INPUT"), style, p);
         current.appendChild(ret.current);
         ret.applyStyle();
@@ -199,9 +199,9 @@ public class JHFragment {
      * (the <b>parent</b> of the named element).
      */
     public JHFragment pop(String until) {
-        do {
+        while (!current.getNodeName().equalsIgnoreCase(until)) {
             pop();
-        } while (!current.getNodeName().equalsIgnoreCase(until));
+        }
         return pop();
     }
 
