@@ -28,7 +28,7 @@ public class AnsObjectNGTest {
 
     @Test
     public void testSomeMethod() throws YamlException {
-        AnsObject ao = new AnsObject(null,testYAML);
+        AnsObject ao = new AnsObject(null, null, testYAML);
         System.out.println(ao);
         assertEquals(ao.getMap().get("address").toString(), "4011 16th Ave S");
         System.out.println(ao.getMap().get("phone numbers"));

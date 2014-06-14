@@ -59,9 +59,18 @@
                     {
                         JHDocument doc = new JHDocument();
                         JHFragment top = new JHFragment(doc, "div");
-                        top.appendP("List of all variables");
+                        top.appendP("List of all roles");
                         top.push("table").appendAttr("border", "1");
-                        books.toHtml(top, books.vars);
+                        books.printRolesTable(top);
+                        top.pop();
+                        doc.write(out);
+                    }
+                    {
+                        JHDocument doc = new JHDocument();
+                        JHFragment top = new JHFragment(doc, "div");
+                        top.appendP("Cross-referenced list of all variables");
+                        top.push("table").appendAttr("border", "1");
+                        books.printVarsTable(top);
                         top.pop();
                         doc.write(out);
                     }
@@ -74,7 +83,7 @@
                             if (f.isDirectory()) {
                                 top.createElement("tr").appendTD(f.getAbsolutePath() + " (dir)");
                             } else {
-                                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", f.getAbsolutePath());
+                                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", books.shortFileName(f));
                             }
                         }
                         top.pop();

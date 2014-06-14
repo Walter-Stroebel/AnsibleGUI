@@ -42,7 +42,7 @@ public class EditYml extends HttpServlet {
         File f = new File(fnam);
         AnsObject o;
         try {
-            o = new AnsObject(f, new FileReader(f));
+            o = new AnsObject(null,f, new FileReader(f));
         } catch (YamlException ex) {
             // not YAML, send to general editor to fix
             response.sendRedirect("EditAny?warn=true&file=" + fnam);
@@ -54,7 +54,7 @@ public class EditYml extends HttpServlet {
             }
             // and reload the file!
             try {
-                o = new AnsObject(f, new FileReader(f));
+                o = new AnsObject(null,f, new FileReader(f));
             } catch (YamlException ex) {
                 // not YAML (anymore), send to general editor to fix
                 response.sendRedirect("EditAny?warn=true&file=" + fnam);

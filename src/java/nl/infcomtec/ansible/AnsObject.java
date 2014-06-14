@@ -20,22 +20,7 @@ import nl.infcomtec.javahtml.JHFragment;
  */
 public class AnsObject {
 
-    public final Object object;
-    public final File inFile;
-
-    public AnsObject(final File inFile, final FileReader fileReader) throws YamlException {
-        YamlReader reader = new YamlReader(fileReader);
-        this.object = reader.read();
-        this.inFile = inFile;
-    }
-
-    public AnsObject(final File inFile, String yaml) throws YamlException {
-        YamlReader reader = new YamlReader(yaml);
-        this.object = reader.read();
-        this.inFile = inFile;
-    }
-
-    public Map<Object, Object> getMap() {
+    public static Map<Object, Object> getMap(Object object) {
         if (object instanceof Map) {
             return (Map) object;
         }
@@ -48,7 +33,6 @@ public class AnsObject {
             toHtml(request, top, e);
             top.pop();
         }
-
     }
 
     private static void toHtml(HttpServletRequest request, JHFragment top, Set<Map.Entry> set) {
@@ -75,4 +59,30 @@ public class AnsObject {
             throw new RuntimeException("What is this? " + obj.getClass().getName());
         }
     }
+
+    public final Object object;
+    public final File inFile;
+
+    public AnsObject(final PlayBooks books, final File inFile, final FileReader fileReader) throws YamlException {
+        YamlReader reader = new YamlReader(fileReader);
+        this.object = reader.read();
+        this.inFile = inFile;
+        if (books != null) {
+            books.scanForVars(inFile, object);
+        }
+    }
+
+    public AnsObject(final PlayBooks books, final File inFile, final String yaml) throws YamlException {
+        YamlReader reader = new YamlReader(yaml);
+        this.object = reader.read();
+        this.inFile = inFile;
+        if (books != null) {
+            books.scanForVars(inFile, object);
+        }
+    }
+
+    public Map<Object, Object> getMap() {
+        return getMap(object);
+    }
+
 }

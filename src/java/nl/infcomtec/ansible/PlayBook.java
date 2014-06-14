@@ -46,7 +46,7 @@ public class PlayBook {
                             l.add(o.toString());
                         } else if (o instanceof Map) {
                             Map<String, Object> rmap = (Map<String, Object>) o;
-                            System.out.println(rmap);
+                            //System.out.println(rmap);
                             String rname = (String) rmap.remove("role");
                             l.add(rname);
                             Role parRole = owner.roles.get(rname);
@@ -92,7 +92,7 @@ public class PlayBook {
                 }
             }
             if (!map.isEmpty()) {
-                System.out.println(map);
+                System.err.println(map);
                 // throw new YamlException("Unknown elements found in playbook");
             }
         }
@@ -111,7 +111,7 @@ public class PlayBook {
         }
         top.createCheckBox(collP).appendAttr("onChange", "this.form.submit()").appendText(" ");
         top.createElement("A").appendAttr("id", inFile.getName());
-        JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + inFile.getAbsolutePath());
+        JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + owner.shortFileName(inFile));
         if (collP.wasSet) {
             top.createElement("hr");
         } else {
@@ -167,12 +167,8 @@ public class PlayBook {
                         }
                         top.pop();
                         top.push("td");
-                        if (!rd.vars.isEmpty()) {
-        top.push("table").appendAttr("border", "1");
-                            owner.toHtml(top, rd.vars);
-                            top.pop();
-                        } else {
-                            top.appendText("-");
+                        for (String vn : rd.vars.keySet()) {
+                            top.appendP(vn);
                         }
                         top.pop();
                     } else {
