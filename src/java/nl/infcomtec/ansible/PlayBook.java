@@ -179,7 +179,6 @@ public class PlayBook {
                     }
                     top.pop();
                 }
-                //top.createText("Roles = " + roles);
                 top.pop();
                 top.pop();
             }

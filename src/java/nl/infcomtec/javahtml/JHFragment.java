@@ -5,6 +5,7 @@
 package nl.infcomtec.javahtml;
 
 import java.io.IOException;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Stack;
 import java.util.TreeMap;
@@ -249,11 +250,21 @@ public class JHFragment {
      * @return The A child element for chaining attribute/style calls.
      */
     public JHFragment appendA(String href, String text) {
-        return createElement("A").appendAttr("href", href).appendText(text);
+        JHFragment ret = createElement("A").appendAttr("href", href).appendText(text);
+        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, String> elm = it.next();
+            if (elm.getKey().equals("color")) {
+                it.remove();
+            }
+        }
+        ret.applyStyle();
+        ret.appendAttr("class", "anchor");
+        return ret;
     }
 
     /**
-     * Shorthand for createElement("A").appendAttribute(href).appendAttribute(target).appendText(text)
+     * Shorthand for
+     * createElement("A").appendAttribute(href).appendAttribute(target).appendText(text)
      *
      * @param href See HTML A element.
      * @param target See HTML A element.
@@ -261,7 +272,16 @@ public class JHFragment {
      * @return The A child element for chaining attribute/style calls.
      */
     public JHFragment appendA(String href, String target, String text) {
-        return createElement("A").appendAttr("href", href).appendAttr("target", target).appendText(text);
+        JHFragment ret = createElement("A").appendAttr("href", href).appendAttr("target", target).appendText(text);
+        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, String> elm = it.next();
+            if (elm.getKey().equals("color")) {
+                it.remove();
+            }
+        }
+        ret.applyStyle();
+        ret.appendAttr("class", "anchor");
+        return ret;
     }
 
 }

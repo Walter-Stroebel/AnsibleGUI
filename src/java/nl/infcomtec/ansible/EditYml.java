@@ -42,7 +42,7 @@ public class EditYml extends HttpServlet {
         File f = new File(fnam);
         AnsObject o;
         try {
-            o = new AnsObject(null,f, new FileReader(f));
+            o = new AnsObject(null, f, new FileReader(f));
         } catch (YamlException ex) {
             // not YAML, send to general editor to fix
             response.sendRedirect("EditAny?warn=true&file=" + fnam);
@@ -54,7 +54,7 @@ public class EditYml extends HttpServlet {
             }
             // and reload the file!
             try {
-                o = new AnsObject(null,f, new FileReader(f));
+                o = new AnsObject(null, f, new FileReader(f));
             } catch (YamlException ex) {
                 // not YAML (anymore), send to general editor to fix
                 response.sendRedirect("EditAny?warn=true&file=" + fnam);
@@ -79,12 +79,14 @@ public class EditYml extends HttpServlet {
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
             out.println("<h1>" + fnam + "</h1>");
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
-            YamlConfig config = new YamlConfig();
-            config.writeConfig.setWrapColumn(150);
             MyWriter toHtml = new MyWriter();
-            YamlWriter writer = new YamlWriter(toHtml, config);
-            writer.write(o.object);
-            writer.close();
+            if (o != null && o.object != null) {
+                YamlConfig config = new YamlConfig();
+                config.writeConfig.setWrapColumn(150);
+                YamlWriter writer = new YamlWriter(toHtml, config);
+                writer.write(o.object);
+                writer.close();
+            }
             out.println(toHtml.toString());
             out.println("</textarea><br />");
             out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");

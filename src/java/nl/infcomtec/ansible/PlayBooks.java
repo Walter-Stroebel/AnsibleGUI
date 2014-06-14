@@ -171,12 +171,15 @@ public class PlayBooks {
                 AnsObject obj;
                 try {
                     obj = new AnsObject(this, f, new FileReader(f));
-                } catch (YamlException ex) {
-                    obj = new AnsObject(this, f, "- Error: \"" + ex.getMessage() + "\"");
+                    ArrayList<Map> list = (ArrayList<Map>) obj.object;
+                    if (list == null) {
+                        list = new ArrayList<>();
+                    }
+                    PlayBook pb = new PlayBook(this, f, list);
+                    playBooks.put(f.getName().substring(0, f.getName().length() - 4), pb);
+                } catch (Exception any) {
+                    System.err.println("Bad playbook: " + f);
                 }
-                ArrayList<Map> list = (ArrayList<Map>) obj.object;
-                PlayBook pb = new PlayBook(this, f, list);
-                playBooks.put(f.getName().substring(0, f.getName().length() - 4), pb);
             } else {
                 randomFiles.add(f);
             }
@@ -206,7 +209,7 @@ public class PlayBooks {
                                 for (Map t : tasks) {
                                     String tnam = (String) t.get("name");
                                     if (tnam == null) {
-                                        tnam = (String)t.get("when");
+                                        tnam = (String) t.get("when");
                                     }
                                     if (tnam == null) {
                                         tnam = "??? " + UUID.randomUUID().toString();
