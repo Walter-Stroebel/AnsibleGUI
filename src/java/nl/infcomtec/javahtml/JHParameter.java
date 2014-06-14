@@ -246,4 +246,8 @@ public class JHParameter {
         return ret.toString();
     }
 
+    public JHParameter clear() {
+        return new JHParameter(varName, defValues, defValues, false);
+    }
+
 }

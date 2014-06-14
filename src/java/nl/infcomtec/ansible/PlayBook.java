@@ -112,6 +112,7 @@ public class PlayBook {
         top.createCheckBox(collP).appendAttr("onChange", "this.form.submit()").appendText(" ");
         top.createElement("A").appendAttr("id", inFile.getName());
         JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + owner.shortFileName(inFile));
+        top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "_blank", "icons/delete.png");
         if (collP.wasSet) {
             top.createElement("hr");
         } else {

@@ -141,7 +141,7 @@ public class JHFragment {
     }
 
     public Select createSelect(JHParameter p) {
-        Select ret = new Select(current.getOwnerDocument().createElement("INPUT"), style, p);
+        Select ret = new Select(current.getOwnerDocument().createElement("SELECT"), style, p);
         current.appendChild(ret.current);
         ret.applyStyle();
         return ret;
@@ -243,6 +243,16 @@ public class JHFragment {
     }
 
     /**
+     * Shorthand for createElement("IMG").appendAttr("src",url)
+     *
+     * @param url the src for the IMG element.
+     * @return The LI child element for chaining attribute/style calls.
+     */
+    public JHFragment appendIMG(String url) {
+        return createElement("IMG").appendAttr("src",url);
+    }
+
+    /**
      * Shorthand for createElement("A").appendAttribute(href).appendText(text)
      *
      * @param text the text for the A element.
@@ -273,6 +283,28 @@ public class JHFragment {
      */
     public JHFragment appendA(String href, String target, String text) {
         JHFragment ret = createElement("A").appendAttr("href", href).appendAttr("target", target).appendText(text);
+        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, String> elm = it.next();
+            if (elm.getKey().equals("color")) {
+                it.remove();
+            }
+        }
+        ret.applyStyle();
+        ret.appendAttr("class", "anchor");
+        return ret;
+    }
+
+    /**
+     * Shorthand for
+     * createElement("A").appendAttribute(href).appendAttribute(target).appendIMG(url)
+     *
+     * @param href See HTML A element.
+     * @param target See HTML A element.
+     * @param url the source for the IMG element.
+     * @return The A child element for chaining attribute/style calls.
+     */
+    public JHFragment appendAImg(String href, String target, String url) {
+        JHFragment ret = createElement("A").appendAttr("href", href).appendAttr("target", target).appendIMG(url);
         for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
             Map.Entry<String, String> elm = it.next();
             if (elm.getKey().equals("color")) {

@@ -8,10 +8,10 @@ import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.servlet.http.HttpServletRequest;
 import nl.infcomtec.javahtml.JHFragment;
 
 /**
@@ -27,34 +27,34 @@ public class AnsObject {
         return null;
     }
 
-    private static void toHtml(HttpServletRequest request, JHFragment top, List l) {
+    private static void toHtml(JHFragment frag, List l) {
         for (Object e : l) {
-            top.push("li");
-            toHtml(request, top, e);
-            top.pop();
+            frag.push("li");
+            toHtml(frag, e);
+            frag.pop();
         }
     }
 
-    private static void toHtml(HttpServletRequest request, JHFragment top, Set<Map.Entry> set) {
+    private static void toHtml(JHFragment frag, Set<Map.Entry> set) {
         for (Map.Entry e : set) {
-            top.push("li");
-            top.appendText(e.getKey().toString()).appendText(": ");
-            toHtml(request, top, e.getValue());
-            top.pop();
+            frag.push("li");
+            frag.appendText(e.getKey().toString()).appendText(": ");
+            toHtml(frag, e.getValue());
+            frag.pop();
         }
     }
 
-    public static void toHtml(HttpServletRequest request, JHFragment top, Object obj) {
+    public static void toHtml(JHFragment frag, Object obj) {
         if (obj instanceof Map) {
-            top.push("ul");
-            toHtml(request, top, (Set<Map.Entry>) ((Map) obj).entrySet());
-            top.pop();
+            frag.push("ul");
+            toHtml(frag, (Set<Map.Entry>) ((Map) obj).entrySet());
+            frag.pop();
         } else if (obj instanceof List) {
-            top.push("ul");
-            toHtml(request, top, (List) obj);
-            top.pop();
+            frag.push("ul");
+            toHtml(frag, (List) obj);
+            frag.pop();
         } else if (obj instanceof String) {
-            top.appendP(obj.toString());
+            frag.appendP(obj.toString());
         } else {
             throw new RuntimeException("What is this? " + obj.getClass().getName());
         }
@@ -85,4 +85,37 @@ public class AnsObject {
         return getMap(object);
     }
 
+    private boolean removeElement(Object object, String element) {
+        if (object instanceof List) {
+            List l = (List) object;
+            if (l.remove(element)) {
+                return true;
+            }
+            for (Iterator it = l.iterator(); it.hasNext();) {
+                Object sub = it.next();
+                if (removeElement(sub, element)) {
+                    it.remove();
+                    return true;
+                }
+            }
+        } else if (object instanceof Map) {
+            Map<Object, Object> map = getMap(object);
+            if (map.containsValue(element)) {
+                map.clear();
+                return true;
+            }
+            for (Object sub : map.values()) {
+                return removeElement(sub, element);
+            }
+        }
+        return false;
+    }
+
+    public boolean removeElement(String element) {
+        return removeElement(object, element);
+    }
+
+    public void toHtml(JHFragment frag) {
+        toHtml(frag, object);
+    }
 }

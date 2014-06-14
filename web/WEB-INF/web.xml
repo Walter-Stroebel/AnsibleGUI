@@ -16,6 +16,18 @@ about 32 K in size.</description>
         <servlet-name>MiniGIT</servlet-name>
         <servlet-class>nl.infcomtec.ansible.MiniGIT</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>DeleteTask</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.DeleteTask</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>DeleteRole</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.DeleteRole</servlet-class>
+    </servlet>
+    <servlet>
+        <servlet-name>DeletePlayBook</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.DeletePlayBook</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>EditAny</servlet-name>
         <url-pattern>/EditAny</url-pattern>
@@ -27,6 +39,18 @@ about 32 K in size.</description>
     <servlet-mapping>
         <servlet-name>MiniGIT</servlet-name>
         <url-pattern>/MiniGIT</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DeleteTask</servlet-name>
+        <url-pattern>/DeleteTask</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DeleteRole</servlet-name>
+        <url-pattern>/DeleteRole</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>DeletePlayBook</servlet-name>
+        <url-pattern>/DeletePlayBook</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

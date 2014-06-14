@@ -5,18 +5,28 @@
 package nl.infcomtec.ansible;
 
 import com.esotericsoftware.yamlbeans.YamlException;
+import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.UUID;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.jsp.JspWriter;
+import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
+import nl.infcomtec.javahtml.JHParameter;
+import nl.infcomtec.javahtml.Select;
 
 /**
  *
@@ -32,11 +42,15 @@ public class PlayBooks {
     public final TreeMap<String, Variable> vars = new TreeMap<>();
     private final int dirPathLen;
 
+    private JHParameter parNewPlayBook;
+    private JHParameter parAddPlaybookRoles;
+    private JHParameter parNewRole;
+    private JHParameter parSubmitPlaybook;
+
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
         this.directory = directory;
         dirPath = directory.getAbsolutePath();
         dirPathLen = dirPath.length() + 1;
-        scan(directory);
     }
 
     /**
@@ -87,7 +101,7 @@ public class PlayBooks {
         frag.pop();
         for (Role e : roles.values()) {
             frag.push("tr");
-            frag.appendTD(e.name);
+            frag.appendTD(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
             frag.push("td");
             boolean first = true;
             for (Map.Entry<String, RoleFileMap> e2 : e.tasks.entrySet()) {
@@ -95,6 +109,7 @@ public class PlayBooks {
                     frag.createElement("br");
                 }
                 frag.appendA("EditYml?file=" + e2.getValue().file.getAbsolutePath(), "_blank", e2.getKey());
+                frag.appendAImg("DeleteTask?file=" + e2.getValue().file.getAbsolutePath() + "&task=" + e2.getKey(), "_blank", "icons/delete.png");
                 first = false;
             }
             frag.pop();
@@ -102,7 +117,7 @@ public class PlayBooks {
         }
     }
 
-    private void scan(File directory) throws YamlException, FileNotFoundException {
+    public void scan() throws YamlException, FileNotFoundException {
         for (File f : directory.listFiles()) {
             if (f.getName().startsWith(".")) {
                 continue;
@@ -327,6 +342,143 @@ public class PlayBooks {
         }
     }
 
+    public void writePlayBooks(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("background-color", "lightyellow");
+        top.setStyleElement("color", "black");
+        for (PlayBook book : playBooks.values()) {
+            book.toHtml(request, top);
+        }
+        doc.write(out);
+    }
+
+    public void writeRoles(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("background-color", "lightcyan");
+        top.setStyleElement("color", "black");
+        top.appendP("List of all roles");
+        top.push("table").appendAttr("border", "1");
+        printRolesTable(top);
+        top.pop();
+        doc.write(out);
+    }
+
+    public void writeVariables(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("background-color", "lightskyblue");
+        top.setStyleElement("color", "black");
+        top.appendP("Cross-referenced list of all variables");
+        top.push("table").appendAttr("border", "1");
+        printVarsTable(top);
+        top.pop();
+        doc.write(out);
+    }
+
+    public void writeRandomFiles(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("background-color", "lightsalmon");
+        top.setStyleElement("color", "black");
+        top.appendP("Other (random) files and/or directories");
+        top.push("table").appendAttr("border", "1");
+        for (File f : randomFiles) {
+            if (f.isDirectory()) {
+                top.createElement("tr").appendTD(f.getAbsolutePath() + " (dir)");
+            } else {
+                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", shortFileName(f));
+            }
+        }
+        top.pop();
+        doc.write(out);
+    }
+
+    public void processNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+        parNewPlayBook = new JHParameter(request, "newPlayBook", "");
+        parAddPlaybookRoles = new JHParameter(request, "addPlaybookRoles", "");
+        parNewRole = new JHParameter(request, "newRole", "");
+        parSubmitPlaybook = new JHParameter(request, "submitPlaybook", "Go!");
+        if (parSubmitPlaybook.wasSet && parNewPlayBook.notEmpty()) {
+            String newPB = parNewPlayBook.getValue().replace(' ', '_');
+            if (!newPB.endsWith(".yml")) {
+                newPB = newPB + ".yml";
+            }
+            File newFile = new File(directory, newPB);
+            if (!newFile.exists()) {
+                String newRole = parNewRole.getValue().trim().replace(' ', '_');
+                ArrayList<String> rolez = new ArrayList<>();
+                if (parAddPlaybookRoles.values != null) {
+                    for (String rz : parAddPlaybookRoles.values) {
+                        if (!rz.trim().isEmpty()) {
+                            rolez.add(rz);
+                        }
+                    }
+                }
+                if (!newRole.isEmpty()) {
+                    rolez.add(newRole);
+                    File rdir = new File(directory, "roles/" + newRole + "/tasks");
+                    rdir.mkdirs();
+                    File dontOverwrite = new File(rdir, "main.yml");
+                    if (!dontOverwrite.exists()) {
+                        try (FileWriter fw = new FileWriter(dontOverwrite)) {
+                            fw.write("- name: ");
+                            fw.write(newRole);
+                            fw.write("_task\n");
+                        }
+                    }
+                }
+                FileWriter writer = new FileWriter(newFile);
+                YamlWriter yw = new YamlWriter(writer);
+                Map rm = new HashMap();
+                rm.put("roles", rolez);
+                yw.write(Collections.singletonList(rm));
+                yw.close();
+            }
+            parNewPlayBook = parNewPlayBook.clear();
+            parAddPlaybookRoles = parAddPlaybookRoles.clear();
+            parNewRole = parNewRole.clear();
+        }
+    }
+
+    public void writeNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "table");
+        top.appendAttr("border", "1");
+        top.push("tr");
+        top.createElement("th").appendAttr("colspan", "2").appendText("Create a new playbook.");
+        top.pop();
+        top.push("tr");
+        top.appendTD("Enter a name for the playbook:");
+        top.push("td");
+        top.createInput("text", parNewPlayBook);
+        top.pop("tr");
+        top.push("tr");
+        top.appendTD("Optionally add some roles:");
+        top.push("td");
+        String rolesSize = "4";
+        if (!roles.isEmpty()) {
+            rolesSize = "" + Math.max(roles.size(), 10);
+        }
+        Select sel = top.createSelect(parAddPlaybookRoles);
+        sel.appendAttr("multiple").appendAttr("size", rolesSize);
+        for (String rnam : roles.keySet()) {
+            sel.addOption(rnam, rnam);
+        }
+        top.pop("tr");
+        top.push("tr");
+        top.appendTD("And/or create a new role:");
+        top.push("td");
+        top.createInput("text", parNewRole);
+        top.pop("tr");
+        top.push("tr").appendAttr("colspan", "2");
+        top.push("td");
+        top.createInput("submit", parSubmitPlaybook);
+        top.pop("table");
+        doc.write(out);
+    }
+
     public static class Variable {
 
         public final TreeSet<File> definedIn = new TreeSet<>();
@@ -348,5 +500,4 @@ public class PlayBooks {
             definedIn.add(definer);
         }
     }
-
 }

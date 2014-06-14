@@ -4,28 +4,27 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlConfig;
-import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
+import nl.infcomtec.javahtml.JHParameter;
 
 /**
  *
  * @author walter
  */
-@WebServlet(name = "EditYml", urlPatterns = {"/EditYml"})
-public class EditYml extends HttpServlet {
+@WebServlet(name = "DeletePlayBook", urlPatterns = {"/DeletePlayBook"})
+public class DeletePlayBook extends HttpServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -38,61 +37,39 @@ public class EditYml extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        String fnam = request.getParameter("file");
-        File f = new File(fnam);
-        AnsObject o;
-        try {
-            o = new AnsObject(null, f, new FileReader(f));
-        } catch (YamlException ex) {
-            // not YAML, send to general editor to fix
-            response.sendRedirect("EditAny?warn=true&file=" + fnam);
-            return;
-        }
-        if (request.getParameter("save") != null) {
-            try (PrintWriter pw = new PrintWriter(new File(fnam))) {
-                pw.print(request.getParameter("edit"));
-            }
-            // and reload the file!
-            try {
-                o = new AnsObject(null, f, new FileReader(f));
-            } catch (YamlException ex) {
-                // not YAML (anymore), send to general editor to fix
-                response.sendRedirect("EditAny?warn=true&file=" + fnam);
-                return;
-            }
-        }
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
-            out.println("<html>");
-            out.println("<head>");
-            String title;
-            if (fnam.length() > 28) {
-                title = fnam.substring(fnam.length() - 28);
-            } else {
-                title = fnam;
+            JHParameter fubar = new JHParameter(request, "fubar", "Yes, make it so!");
+            JHParameter file = new JHParameter(request, "file");
+            File tFile = new File(file.getValue());
+            AnsObject tObj = new AnsObject(null, tFile, new FileReader(tFile));
+            JHDocument doc = new JHDocument();
+            JHFragment top = new JHFragment(doc, "html");
+            top.push("head");
+            top.createElement("title").appendText("Delete a playbook");
+            top.pop();
+            top.push("body");
+            if (fubar.wasSet) {
+                tFile.delete();
+                top.appendP("All done, you can close this window/tab now.");
+                doc.write(out);
+                return;
             }
-            out.println("<title>" + title + "</title>");
-            out.println("</head>");
-            out.println("<body>");
-            out.println("<form action=\"EditYml\" method=\"POST\">");
-            out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
-            out.println("<h1>" + fnam + "</h1>");
-            out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
-            MyWriter toHtml = new MyWriter();
-            if (o != null && o.object != null) {
-                YamlConfig config = new YamlConfig();
-                config.writeConfig.setWrapColumn(150);
-                YamlWriter writer = new YamlWriter(toHtml, config);
-                writer.write(o.object);
-                writer.close();
-            }
-            out.println(toHtml.toString());
-            out.println("</textarea><br />");
-            out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");
-            out.println("</form>");
-            out.println("</body>");
-            out.println("</html>");
+            top.push("form");
+            top.appendAttr("action", "DeletePlayBook").appendAttr("method", "POST");
+            top.createInput("hidden", file);
+            MyWriter myw = new MyWriter();
+            YamlWriter writer = new YamlWriter(myw);
+            writer.write(tObj.object);
+            writer.close();
+            top.appendP("Delete playbook ["+tFile.getAbsolutePath()+"]?");
+            top.createElement("pre").appendText(myw.toString());
+            top.createInput("submit", fubar).setStyleElement("font-size", "larger");
+            top.appendP("(Else just close this window/tab).");
+            doc.write(out);
+        } catch (Exception ex) {
+            throw new ServletException(ex);
         }
     }
 
