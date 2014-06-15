@@ -14,7 +14,7 @@ import java.io.InputStreamReader;
  * @author walter
  */
 public class UnixFile {
-
+    
     public static String whatsThatFile(File f) {
         try {
             ProcessBuilder pb = new ProcessBuilder("/usr/bin/file", f.getAbsolutePath());
@@ -36,8 +36,27 @@ public class UnixFile {
         }
         return "???";
     }
-
+    
     public static boolean isItASCII(File f) {
         return whatsThatFile(f).contains("ASCII");
+    }
+    
+    static boolean copyRecursive(File from, File to) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("/bin/cp", "-a", from.getAbsolutePath(), to.getAbsolutePath());
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            try (BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                for (String extra = bfr.readLine(); extra != null; extra = bfr.readLine()) {
+                    System.err.println("Odd, did not expect any output ... " + extra);
+                }
+                return false;
+            } finally {
+                return p.waitFor() == 0;
+            }
+        } catch (Exception all) {
+            all.printStackTrace(System.err);
+        }
+        return false;
     }
 }

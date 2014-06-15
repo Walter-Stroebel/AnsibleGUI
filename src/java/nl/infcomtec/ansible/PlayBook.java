@@ -109,7 +109,20 @@ public class PlayBook {
         if (expnAll.wasSet) {
             expandP = JHParameter.overrideWasSet(expandP, true);
         }
-        top.createCheckBox(expandP).appendAttr("onChange", "this.form.submit()").appendText(" ");
+        top.createCheckBox(expandP).appendAttr("onChange", "this.form.submit()").appendAttr("id", expandP.varName);
+        if (!expandP.wasSet) {
+            top.push("label").appendAttr("for", expandP.varName);
+            top.appendText(" ");
+            top.appendIMG("icons/application_side_expand.png");
+            top.pop();
+            top.appendText(" ");
+        } else {
+            top.push("label").appendAttr("for", expandP.varName);
+            top.appendText(" ");
+            top.appendIMG("icons/application_side_contract.png");
+            top.pop();
+            top.appendText(" ");
+        }
         top.createElement("A").appendAttr("id", inFile.getName());
         JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + owner.shortFileName(inFile));
         top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "_blank", "icons/delete.png");

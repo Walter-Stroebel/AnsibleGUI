@@ -51,6 +51,8 @@ public class PlayBooks {
     private JHParameter parMoveTasksToNewRole;
     private JHParameter parSubmitMoveTasksToNewRole;
     private JHParameter parSelectedTasks;
+    private JHParameter parMergeRole;
+    private JHParameter parSubmitMergeRole;
 
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
         this.directory = directory;
@@ -160,6 +162,11 @@ public class PlayBooks {
     }
 
     public void scan() throws YamlException, FileNotFoundException {
+        // reset all data in case some form action left some junk there
+        playBooks.clear();
+        randomFiles.clear();
+        roles.clear();
+        vars.clear();
         for (File f : directory.listFiles()) {
             if (f.getName().startsWith(".")) {
                 continue;
@@ -250,93 +257,97 @@ public class PlayBooks {
             roles.put(roleDir.getName(), role);
         }
         for (File rd : roleDir.listFiles()) {
-            if (rd.getName().startsWith(".")) {
-                continue;
-            }
-            if (rd.isDirectory()) {
-                switch (rd.getName()) {
-                    case "tasks": {
-                        TreeSet<File> all = new TreeSet<>();
-                        all.addAll(Arrays.asList(rd.listFiles()));
-                        for (File aTask : rd.listFiles()) {
-                            if (aTask.getName().startsWith(".")) {
-                                continue;
-                            }
-                            if ("main.yml".equals(aTask.getName())) {
-                                readTasks(aTask, role, all);
-                            }
+            readRoleFromDirectory(rd, role);
+        }
+    }
+
+    private void readRoleFromDirectory(File rd, Role role) throws FileNotFoundException, YamlException {
+        if (rd.getName().startsWith(".")) {
+            return;
+        }
+        if (rd.isDirectory()) {
+            switch (rd.getName()) {
+                case "tasks": {
+                    TreeSet<File> all = new TreeSet<>();
+                    all.addAll(Arrays.asList(rd.listFiles()));
+                    for (File aTask : rd.listFiles()) {
+                        if (aTask.getName().startsWith(".")) {
+                            continue;
                         }
-                        randomFiles.addAll(all);
+                        if ("main.yml".equals(aTask.getName())) {
+                            readTasks(aTask, role, all);
+                        }
+                    }
+                    randomFiles.addAll(all);
+                }
+                break;
+                case "handlers":
+                    for (File aHandler : rd.listFiles()) {
+                        if (aHandler.getName().startsWith(".")) {
+                            continue;
+                        }
+                        if (aHandler.getName().endsWith(".yml")) {
+                            AnsObject hand = new AnsObject(this, aHandler, new FileReader(aHandler));
+                            List<Map> hands = (List<Map>) hand.object;
+                            for (Map t : hands) {
+                                role.handlers.put((String) t.get("name"), new RoleFileMap(aHandler, t));
+                            }
+                        } else {
+                            randomFiles.add(aHandler);
+                        }
                     }
                     break;
-                    case "handlers":
-                        for (File aHandler : rd.listFiles()) {
-                            if (aHandler.getName().startsWith(".")) {
-                                continue;
-                            }
-                            if (aHandler.getName().endsWith(".yml")) {
-                                AnsObject hand = new AnsObject(this, aHandler, new FileReader(aHandler));
-                                List<Map> hands = (List<Map>) hand.object;
-                                for (Map t : hands) {
-                                    role.handlers.put((String) t.get("name"), new RoleFileMap(aHandler, t));
+                case "files":
+                    for (File aFile : rd.listFiles()) {
+                        if (aFile.getName().startsWith(".")) {
+                            continue;
+                        }
+                        role.files.put(aFile.getName(), aFile);
+                    }
+                    break;
+                case "templates":
+                    for (File aFile : rd.listFiles()) {
+                        if (aFile.getName().startsWith(".")) {
+                            continue;
+                        }
+                        role.templates.put(aFile.getName(), aFile);
+                        if (aFile.length() < 64000) { // sanity test
+                            try (BufferedReader bfr = new BufferedReader(new FileReader(aFile))) {
+                                for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
+                                    scanStringForVars(s, aFile);
                                 }
-                            } else {
-                                randomFiles.add(aHandler);
+                            } catch (Exception any) {
+                                // we tried
                             }
                         }
-                        break;
-                    case "files":
-                        for (File aFile : rd.listFiles()) {
-                            if (aFile.getName().startsWith(".")) {
-                                continue;
-                            }
-                            role.files.put(aFile.getName(), aFile);
+                    }
+                    break;
+                case "defaults":
+                case "vars":
+                    readRoleVarsAndDefaults(rd, role);
+                    break;
+                case "meta":
+                    for (File aFile : rd.listFiles()) {
+                        if (aFile.getName().startsWith(".")) {
+                            continue;
                         }
-                        break;
-                    case "templates":
-                        for (File aFile : rd.listFiles()) {
-                            if (aFile.getName().startsWith(".")) {
-                                continue;
-                            }
-                            role.templates.put(aFile.getName(), aFile);
-                            if (aFile.length() < 64000) { // sanity test
-                                try (BufferedReader bfr = new BufferedReader(new FileReader(aFile))) {
-                                    for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
-                                        scanStringForVars(s, aFile);
-                                    }
-                                } catch (Exception any) {
-                                    // we tried
-                                }
-                            }
-                        }
-                        break;
-                    case "defaults":
-                    case "vars":
-                        readRoleVarsAndDefaults(rd, role);
-                        break;
-                    case "meta":
-                        for (File aFile : rd.listFiles()) {
-                            if (aFile.getName().startsWith(".")) {
-                                continue;
-                            }
-                            if (aFile.getName().endsWith(".yml")) {
-                                try {
-                                    role.meta = new AnsObject(this, aFile, new FileReader(aFile));
-                                } catch (Exception ex) {
-                                    randomFiles.add(aFile);
-                                }
-                            } else {
+                        if (aFile.getName().endsWith(".yml")) {
+                            try {
+                                role.meta = new AnsObject(this, aFile, new FileReader(aFile));
+                            } catch (Exception ex) {
                                 randomFiles.add(aFile);
                             }
+                        } else {
+                            randomFiles.add(aFile);
                         }
-                        break;
-                    default:
-                        randomFiles.add(rd);
-                        break;
-                }
-            } else {
-                randomFiles.add(rd);
+                    }
+                    break;
+                default:
+                    randomFiles.add(rd);
+                    break;
             }
+        } else {
+            randomFiles.add(rd);
         }
     }
 
@@ -494,50 +505,148 @@ public class PlayBooks {
         parMoveTasksToNewRole = new JHParameter(request, "moveTasksToNewRole", "");
         parSubmitMoveTasksToNewRole = new JHParameter(request, "submitMoveTasksToNewRole", "Do it!");
         parSelectedTasks = new JHParameter(request, "selectedTasks", "");
+        parMergeRole = new JHParameter(request, "mergeRole", "");
+        parSubmitMergeRole = new JHParameter(request, "submitMergeRole", "Do it!");
         if (parMoveTasksToNewRole.notEmpty() && parSubmitMoveTasksToNewRole.wasSet) {
-            Role rOld = new Role(parEditRole.getValue());
-            Role rNew = new Role(parMoveTasksToNewRole.getValue());
+            moveTasksToNewRole();
+        } else if (parMergeRole.notEmpty() && parSubmitMergeRole.wasSet) {
+            Role rKeep = new Role(parEditRole.getValue());
+            Role rMerge = new Role(parMergeRole.getValue());
             File rolesF = new File(directory, "roles");
-            File roleF = new File(rolesF, parEditRole.getValue());
-            File tasksF = new File(roleF, "tasks");
-            File oldTaskF = new File(tasksF, "main.yml");
-            readTasks(oldTaskF, rOld, null);
-            for (Iterator<Task> it = rOld.tasks.iterator(); it.hasNext();) {
-                Task t = it.next();
-                String tSel = makeTaskSelector(rOld.name, t.name);
-                for (String sel : parSelectedTasks.values) {
-                    if (sel.equals(tSel)) {
-                        it.remove();
-                        rNew.tasks.add(t);
+            File keepF = new File(rolesF, rKeep.name);
+            File mergeF = new File(rolesF, rMerge.name);
+            for (File rd : keepF.listFiles()) {
+                readRoleFromDirectory(rd, rKeep);
+            }
+            for (File rd : mergeF.listFiles()) {
+                readRoleFromDirectory(rd, rMerge);
+            }
+            // move any files
+            {
+                File keepFilesDir = new File(keepF, "files");
+                for (File f : rMerge.files.values()) {
+                    keepFilesDir.mkdir();
+                    f.renameTo(new File(keepFilesDir, f.getName()));
+                }
+            }
+            // move any templates
+            {
+                File keepTplsDir = new File(keepF, "templates");
+                for (File f : rMerge.templates.values()) {
+                    keepTplsDir.mkdir();
+                    f.renameTo(new File(keepTplsDir, f.getName()));
+                }
+            }
+            // merge any handlers
+            {
+                File keepHandDir = new File(keepF, "handlers");
+                for (RoleFileMap e : rMerge.handlers.values()) {
+                    keepHandDir.mkdir();
+                    File keepFile = new File(keepHandDir, "main.yml");
+                    if (keepFile.exists()) {
+                        AnsObject keepObj = new AnsObject(null, keepFile, new FileReader(keepFile));
+                        ((List)keepObj.object).add(e.map);
+                        try (PrintWriter pw = new PrintWriter(keepFile)) {
+                            pw.print(keepObj.makeString());
+                        }
+                    } else {
+                        try (PrintWriter pw = new PrintWriter(keepFile)) {
+                            pw.print(AnsObject.makeString(e.map));
+                        }
                     }
                 }
             }
-            if (!rNew.tasks.isEmpty()) {
-                File roleFN = new File(rolesF, parMoveTasksToNewRole.getValue());
-                File tasksFN = new File(roleFN, "tasks");
-                tasksFN.mkdirs();
-                File newTaskF = new File(tasksFN, "main.yml");
-                {
-                    ArrayList<Map> tmp = new ArrayList<>();
-                    for (Task t : rNew.tasks) {
-                        tmp.add(t.map);
-                    }
-                    try (PrintWriter pw = new PrintWriter(newTaskF)) {
-                        pw.print(AnsObject.makeString(tmp));
-                    }
+            // merge the tasks -- also merges any included tasks in one main.yml
+            {
+                File keepTaskDir = new File(keepF, "tasks");
+                for (File f : keepTaskDir.listFiles()){
+                    f.delete();
                 }
-                {
-                    ArrayList<Map> tmp = new ArrayList<>();
-                    for (Task t : rOld.tasks) {
-                        tmp.add(t.map);
-                    }
-                    try (PrintWriter pw = new PrintWriter(oldTaskF)) {
-                        pw.print(AnsObject.makeString(tmp));
-                    }
+                ArrayList<Map> tmp = new ArrayList<>();
+                for (Task t : rKeep.tasks) {
+                    tmp.add(t.map);
                 }
-                parMoveTasksToNewRole=parMoveTasksToNewRole.clear();
-                parSelectedTasks=parSelectedTasks.clear();
+                for (Task t : rMerge.tasks) {
+                    tmp.add(t.map);
+                }
+                try (PrintWriter pw = new PrintWriter(new File(keepTaskDir, "main.yml"))) {
+                    pw.print(AnsObject.makeString(tmp));
+                }
             }
+            // merge any vars
+            {
+                File keepVarsDir = new File(keepF, "vars");
+                for (Variable e : rMerge.vars.values()) {
+                    for (File f : e.definedIn) {
+                        AnsObject mergeObj = new AnsObject(null, f, new FileReader(f));
+                        keepVarsDir.mkdir();
+                        File keepFile = new File(keepVarsDir, f.getName());
+                        if (keepFile.exists()) {
+                            AnsObject keepObj = new AnsObject(null, keepFile, new FileReader(keepFile));
+                            keepObj.getMap().putAll(mergeObj.getMap());
+                            try (PrintWriter pw = new PrintWriter(keepFile)) {
+                                pw.print(keepObj.makeString());
+                            }
+                        } else {
+                            try (PrintWriter pw = new PrintWriter(keepFile)) {
+                                pw.print(mergeObj.makeString());
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void moveTasksToNewRole() throws FileNotFoundException, YamlException {
+        Role rOld = new Role(parEditRole.getValue());
+        Role rNew = new Role(parMoveTasksToNewRole.getValue());
+        File rolesF = new File(directory, "roles");
+        File roleF = new File(rolesF, parEditRole.getValue());
+        File tasksF = new File(roleF, "tasks");
+        File oldTaskF = new File(tasksF, "main.yml");
+        readTasks(oldTaskF, rOld, null);
+        for (Iterator<Task> it = rOld.tasks.iterator(); it.hasNext();) {
+            Task t = it.next();
+            String tSel = makeTaskSelector(rOld.name, t.name);
+            for (String sel : parSelectedTasks.values) {
+                if (sel.equals(tSel)) {
+                    it.remove();
+                    rNew.tasks.add(t);
+                }
+            }
+        }
+        if (!rNew.tasks.isEmpty()) {
+            File roleFN = new File(rolesF, parMoveTasksToNewRole.getValue());
+            if (roleFN.exists()) {
+                parMoveTasksToNewRole.values = new String[]{parMoveTasksToNewRole.getValue() + "_exists!"};
+                return;
+            }
+            if (!UnixFile.copyRecursive(roleF, roleFN)) {
+                return;
+            }
+            File tasksFN = new File(roleFN, "tasks");
+            File newTaskF = new File(tasksFN, "main.yml");
+            {
+                ArrayList<Map> tmp = new ArrayList<>();
+                for (Task t : rNew.tasks) {
+                    tmp.add(t.map);
+                }
+                try (PrintWriter pw = new PrintWriter(newTaskF)) {
+                    pw.print(AnsObject.makeString(tmp));
+                }
+            }
+            {
+                ArrayList<Map> tmp = new ArrayList<>();
+                for (Task t : rOld.tasks) {
+                    tmp.add(t.map);
+                }
+                try (PrintWriter pw = new PrintWriter(oldTaskF)) {
+                    pw.print(AnsObject.makeString(tmp));
+                }
+            }
+            parMoveTasksToNewRole = parMoveTasksToNewRole.clear();
+            parSelectedTasks = parSelectedTasks.clear();
         }
     }
 
@@ -670,8 +779,14 @@ public class PlayBooks {
             top.push("tr");
             top.appendTD("Merge with role:");
             top.push("td");
-            top.appendText("[select role]");
-            top.appendText("[do it]");
+            Select selm = top.createSelect(parMergeRole);
+            selm.appendAttr("size", rolesSize);
+            selm.addOption("", "");
+            for (String rnam : roles.keySet()) {
+                selm.addOption(rnam, rnam);
+            }
+            top.appendText(" ");
+            top.createInput("submit", parSubmitMergeRole);
             top.pop("tr");
         }
         doc.write(out);

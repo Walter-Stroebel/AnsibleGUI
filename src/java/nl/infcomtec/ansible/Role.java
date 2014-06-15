@@ -15,7 +15,6 @@ import java.util.TreeMap;
  */
 public class Role {
 
-    public File taskFile;
     public final String name;
     public final ArrayList<Task> tasks = new ArrayList<>();
     public final TreeMap<String, RoleFileMap> handlers = new TreeMap<>();

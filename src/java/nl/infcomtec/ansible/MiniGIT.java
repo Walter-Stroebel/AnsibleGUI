@@ -56,7 +56,7 @@ public class MiniGIT extends HttpServlet {
                 html.appendP("(Very) minimal GIT support.");
                 html.appendA("index.jsp", "(Or return to the editor if done here).");
                 html.appendP("Just supports the standard work-flow of"
-                        + " [git pull origin master],[edit],[git commit -a -m'what I did'],[git push origin master]");
+                        + " [git pull origin master],[edit],[git add -A .], [git commit -a -m'what I did'],[git push origin master]");
                 html.appendP("In other words, this will only work if:");
                 html.push("ul");
                 html.appendLI("You have GIT installed and accessible to the Tomcat user.");
@@ -80,9 +80,13 @@ public class MiniGIT extends HttpServlet {
                     html.appendText(doPush(ansPath));
                     html.pop();
                 }
-                if (commit.wasSet && ctext.notEmpty()) {
+                if (commit.wasSet) {
                     html.push("pre");
-                    html.appendText(doCommit(ansPath, ctext.getValue()));
+                    if (ctext.notEmpty()) {
+                        html.appendText(doCommit(ansPath, ctext.getValue()));
+                    } else {
+                        html.appendText("You are required to enter a commit message.");
+                    }
                     html.pop();
                 }
                 html.pop("html");
@@ -175,12 +179,27 @@ public class MiniGIT extends HttpServlet {
     }
 
     private String doCommit(String ansPath, String ctext) {
+        StringBuilder ret = new StringBuilder();
+        try {
+            ProcessBuilder pb = new ProcessBuilder("git", "add", "-A", ".");
+            pb.redirectErrorStream(true);
+            pb.directory(new File(ansPath));
+            Process p = pb.start();
+            try (BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
+                    ret.append(s).append("\n");
+                }
+            } finally {
+                p.waitFor();
+            }
+        } catch (Exception all) {
+            // ignore, should not be critical
+        }
         try {
             ProcessBuilder pb = new ProcessBuilder("git", "commit", "-a", "-m", ctext);
             pb.redirectErrorStream(true);
             pb.directory(new File(ansPath));
             Process p = pb.start();
-            StringBuilder ret = new StringBuilder();
             try (BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
                 for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
                     ret.append(s).append("\n");
