@@ -288,7 +288,12 @@ public class PlayBooks {
                         }
                         if (aHandler.getName().endsWith(".yml")) {
                             AnsObject hand = new AnsObject(this, aHandler, new FileReader(aHandler));
-                            List<Map> hands = (List<Map>) hand.object;
+                            List<Map> hands;
+                            if (hand.object instanceof Map) {
+                                hands = Collections.singletonList((Map) hand.object);
+                            } else {
+                                hands = (List<Map>) hand.object;
+                            }
                             for (Map t : hands) {
                                 role.handlers.put((String) t.get("name"), new RoleFileMap(aHandler, t));
                             }
@@ -545,13 +550,13 @@ public class PlayBooks {
                     File keepFile = new File(keepHandDir, "main.yml");
                     if (keepFile.exists()) {
                         AnsObject keepObj = new AnsObject(null, keepFile, new FileReader(keepFile));
-                        ((List)keepObj.object).add(e.map);
+                        ((List) keepObj.object).add(e.map);
                         try (PrintWriter pw = new PrintWriter(keepFile)) {
                             pw.print(keepObj.makeString());
                         }
                     } else {
                         try (PrintWriter pw = new PrintWriter(keepFile)) {
-                            pw.print(AnsObject.makeString(e.map));
+                            pw.print(AnsObject.makeString(Collections.singletonList(e.map)));
                         }
                     }
                 }
@@ -559,7 +564,7 @@ public class PlayBooks {
             // merge the tasks -- also merges any included tasks in one main.yml
             {
                 File keepTaskDir = new File(keepF, "tasks");
-                for (File f : keepTaskDir.listFiles()){
+                for (File f : keepTaskDir.listFiles()) {
                     f.delete();
                 }
                 ArrayList<Map> tmp = new ArrayList<>();
