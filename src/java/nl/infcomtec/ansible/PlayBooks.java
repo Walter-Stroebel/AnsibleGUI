@@ -11,6 +11,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -67,14 +68,17 @@ public class PlayBooks {
         return longName;
     }
 
-    public void printVarsTable(JHFragment frag) {
+    public void printVarsTable(JHFragment frag, boolean showUndefd) {
         frag.push("tr");
         frag.appendTD("Var");
-        frag.appendTD("Value(s)");
+        frag.push("td").appendAttr("width", "40%").appendText("Value(s)");
         frag.appendTD("Defined in");
         frag.appendTD("Used by");
         frag.pop();
         for (Variable e : vars.values()) {
+            if (e.definedIn.isEmpty() && !showUndefd) {
+                continue;
+            }
             frag.push("tr");
             frag.appendTD(e.name);
             frag.appendTD(e.values.toString());
@@ -101,7 +105,11 @@ public class PlayBooks {
         frag.pop();
         for (Role e : roles.values()) {
             frag.push("tr");
-            frag.appendTD(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
+            frag.push("td");
+            frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
+            if (e.meta!=null){
+                e.meta.toHtml(frag);
+            }
             frag.push("td");
             boolean first = true;
             for (Map.Entry<String, RoleFileMap> e2 : e.tasks.entrySet()) {
@@ -213,29 +221,20 @@ public class PlayBooks {
             }
             if (rd.isDirectory()) {
                 switch (rd.getName()) {
-                    case "tasks":
+                    case "tasks": {
+                        TreeSet<File> all = new TreeSet<>();
+                        all.addAll(Arrays.asList(rd.listFiles()));
                         for (File aTask : rd.listFiles()) {
                             if (aTask.getName().startsWith(".")) {
                                 continue;
                             }
-                            if (aTask.getName().endsWith(".yml")) {
-                                AnsObject task = new AnsObject(this, aTask, new FileReader(aTask));
-                                List<Map> tasks = (List<Map>) task.object;
-                                for (Map t : tasks) {
-                                    String tnam = (String) t.get("name");
-                                    if (tnam == null) {
-                                        tnam = (String) t.get("when");
-                                    }
-                                    if (tnam == null) {
-                                        tnam = "??? " + UUID.randomUUID().toString();
-                                    }
-                                    role.tasks.put(tnam, new RoleFileMap(aTask, t));
-                                }
-                            } else {
-                                randomFiles.add(aTask);
+                            if ("main.yml".equals(aTask.getName())) {
+                                readTasks(aTask, role, all);
                             }
                         }
-                        break;
+                        randomFiles.addAll(all);
+                    }
+                    break;
                     case "handlers":
                         for (File aHandler : rd.listFiles()) {
                             if (aHandler.getName().startsWith(".")) {
@@ -277,25 +276,23 @@ public class PlayBooks {
                             }
                         }
                         break;
+                    case "defaults":
                     case "vars":
-                        for (File ts : rd.listFiles()) {
-                            if (ts.getName().startsWith(".")) {
+                        readRoleVarsAndDefaults(rd, role);
+                        break;
+                    case "meta":
+                        for (File aFile : rd.listFiles()) {
+                            if (aFile.getName().startsWith(".")) {
                                 continue;
                             }
-                            if (ts.getName().endsWith(".yml")) {
-                                AnsObject var = new AnsObject(this, ts, new FileReader(ts));
-                                for (Map.Entry<Object, Object> e : var.getMap().entrySet()) {
-                                    Variable vre = vars.get(e.getKey().toString());
-                                    if (vre == null) {
-                                        vre = new Variable(ts, e.getKey().toString(), e.getValue().toString());
-                                    } else {
-                                        vre.definedIn.add(ts);
-                                        vre.values.add(e.getValue().toString());
-                                    }
-                                    role.vars.put(e.getKey().toString(), vre);
+                            if (aFile.getName().endsWith(".yml")){
+                                try {
+                                    role.meta = new AnsObject(this, aFile, new FileReader(aFile));
+                                } catch (Exception ex){
+                                    randomFiles.add(aFile);
                                 }
-                            } else {
-                                randomFiles.add(ts);
+                            }else{
+                                    randomFiles.add(aFile);
                             }
                         }
                         break;
@@ -306,6 +303,64 @@ public class PlayBooks {
             } else {
                 randomFiles.add(rd);
             }
+        }
+    }
+
+    private void readRoleVarsAndDefaults(File rd, Role role) throws YamlException, FileNotFoundException {
+        for (File ts : rd.listFiles()) {
+            if (ts.getName().startsWith(".")) {
+                continue;
+            }
+            if (ts.getName().endsWith(".yml")) {
+                try {
+                    AnsObject var = new AnsObject(this, ts, new FileReader(ts));
+                    for (Map.Entry<Object, Object> e : var.getMap().entrySet()) {
+                        Variable vre = vars.get(e.getKey().toString());
+                        if (vre == null) {
+                            vre = new Variable(ts, e.getKey().toString(), e.getValue().toString());
+                            vars.put(e.getKey().toString(), vre);
+                        } else {
+                            vre.definedIn.add(ts);
+                            vre.values.add(e.getValue().toString());
+                        }
+                        role.vars.put(e.getKey().toString(), vre);
+                    }
+                } catch (Exception any) {
+                    randomFiles.add(ts);
+                }
+            } else {
+                randomFiles.add(ts);
+            }
+        }
+    }
+
+    private void readTasks(File aTask, Role role, TreeSet<File> all) throws FileNotFoundException, YamlException {
+        all.remove(aTask);
+        if (aTask.getName().endsWith(".yml")) {
+            try {
+                AnsObject task = new AnsObject(this, aTask, new FileReader(aTask));
+                List<Map> tasks = (List<Map>) task.object;
+                for (Map t : tasks) {
+                    String inc = (String) t.get("include");
+                    if (inc != null) {
+                        File incF = new File(aTask.getParentFile(), inc);
+                        readTasks(incF, role, all);
+                    } else {
+                        String tnam = (String) t.get("name");
+                        if (tnam == null) {
+                            tnam = (String) t.get("when");
+                        }
+                        if (tnam == null) {
+                            tnam = "??? " + UUID.randomUUID().toString();
+                        }
+                        role.tasks.put(tnam, new RoleFileMap(aTask, t));
+                    }
+                }
+            } catch (Exception ex) {
+                randomFiles.add(aTask);
+            }
+        } else {
+            randomFiles.add(aTask);
         }
     }
 
@@ -366,13 +421,16 @@ public class PlayBooks {
     }
 
     public void writeVariables(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHParameter showUndef = new JHParameter(request, "showUndefVars", "yes");
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("background-color", "lightskyblue");
         top.setStyleElement("color", "black");
-        top.appendP("Cross-referenced list of all variables");
+        top.push("P").appendText("Cross-referenced list of all variables. Also show undefined variables: ");
+        top.createCheckBox(showUndef).setAutoSubmit();
+        top.pop();
         top.push("table").appendAttr("border", "1");
-        printVarsTable(top);
+        printVarsTable(top, showUndef.wasSet);
         top.pop();
         doc.write(out);
     }
@@ -444,8 +502,8 @@ public class PlayBooks {
 
     public void writeNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
         JHDocument doc = new JHDocument();
-        JHFragment top = new JHFragment(doc, "table");
-        top.appendAttr("border", "1");
+        JHFragment top = new JHFragment(doc, "div");
+        top.push("table").appendAttr("border", "1");
         top.push("tr");
         top.createElement("th").appendAttr("colspan", "2").appendText("Create a new playbook.");
         top.pop();
@@ -475,7 +533,6 @@ public class PlayBooks {
         top.push("tr").appendAttr("colspan", "2");
         top.push("td");
         top.createInput("submit", parSubmitPlaybook);
-        top.pop("table");
         doc.write(out);
     }
 

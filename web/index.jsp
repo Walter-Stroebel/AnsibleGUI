@@ -39,6 +39,10 @@
                 color: darkblue;
                 text-decoration: underline;
             }
+            div {
+                margin: 5px;
+                padding: 5px;
+            }
         </style>
         <title>AnsibleGUI</title>
     </head>

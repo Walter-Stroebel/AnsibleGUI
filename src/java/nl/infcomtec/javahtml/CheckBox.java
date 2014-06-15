@@ -27,4 +27,9 @@ public class CheckBox extends JHFragment {
         }
     }
 
+    public CheckBox setAutoSubmit() {
+        appendAttr("onChange", "this.form.submit()");
+        return this;
+    }
+
 }

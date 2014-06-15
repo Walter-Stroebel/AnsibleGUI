@@ -33,8 +33,9 @@ public class Select extends Input {
         super(parent, style, p);
     }
 
-    public void setAutoSubmit() {
+    public Select setAutoSubmit() {
         appendAttr("onChange", "this.form.submit()");
+        return this;
     }
 
     public void addOptions(Adder<?> adder) {
