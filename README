@@ -29,9 +29,9 @@ When editing a .yml file, it is read using YAMLBeans and converted to text for
 your editing. When you save the edited text, the reverse happens: your text is
 interpreted as being YAML and the resulting object is saved to the file.
 
-This project is in ALPHA (although it is fully functional for *my* set of
-Ansible files) and will quite likely produce some screens filled with
-Java exceptions depending on the complexity of your Ansible projects.
+This project is in BETA (which means it is fully functional for *my* set of
+Ansible files) and might still produce some screens filled with
+Java exceptions; depending on the complexity (or age) of your Ansible projects.
 
 Which is *why* it is releases as Open Source; please feel free to fix bugs,
 create some documentation, add some styling to the horrid white pages and so
