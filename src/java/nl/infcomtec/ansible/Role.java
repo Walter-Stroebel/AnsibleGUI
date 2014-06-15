@@ -5,6 +5,8 @@
 package nl.infcomtec.ansible;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeMap;
 
 /**
@@ -15,7 +17,7 @@ public class Role {
 
     public File taskFile;
     public final String name;
-    public final TreeMap<String, RoleFileMap> tasks = new TreeMap<>();
+    public final ArrayList<Task> tasks = new ArrayList<>();
     public final TreeMap<String, RoleFileMap> handlers = new TreeMap<>();
     public final TreeMap<String, File> files = new TreeMap<>();
     public final TreeMap<String, File> templates = new TreeMap<>();
@@ -29,6 +31,14 @@ public class Role {
     @Override
     public String toString() {
         return "Role{" + "name=" + name + ", tasks=" + tasks.size() + ", handlers=" + handlers.size() + ", files=" + files.size() + ", templates=" + templates.size() + ", vars=" + vars.size() + '}';
+    }
+
+    public List<String> getTaskNames() {
+        ArrayList<String> ret = new ArrayList<>();
+        for (Task e:tasks){
+            ret.add(e.name);
+        }
+        return ret;
     }
 
 }

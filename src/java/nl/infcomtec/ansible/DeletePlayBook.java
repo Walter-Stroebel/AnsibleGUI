@@ -58,11 +58,8 @@ public class DeletePlayBook extends HttpServlet {
             }
             top.push("form");
             top.appendAttr("action", "DeletePlayBook").appendAttr("method", "POST");
-            top.createInput("hidden", file);
-            MyWriter myw = new MyWriter();
-            YamlWriter writer = new YamlWriter(myw);
-            writer.write(tObj.object);
-            writer.close();
+            top.createInput("hidden", file);            
+            String myw = tObj.makeString();            
             top.appendP("Delete playbook ["+tFile.getAbsolutePath()+"]?");
             top.createElement("pre").appendText(myw.toString());
             top.createInput("submit", fubar).setStyleElement("font-size", "larger");

@@ -61,8 +61,11 @@
                 if (!ansPath.isEmpty()) {
                     PlayBooks books = new PlayBooks(new File(ansPath));
                     books.processNewPlayBookForm(request, out);
+                    books.processEditRoleForm(request, out);
                     books.scan();
                     books.writeNewPlayBookForm(request, out);
+                    books.writeEditRoleForm(request, out);
+                    out.println("<div style=\"clear: both;\" />");
                     books.writePlayBooks(request, out);
                     books.writeRoles(request, out);
                     books.writeVariables(request, out);

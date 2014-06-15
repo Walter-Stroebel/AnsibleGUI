@@ -57,14 +57,9 @@ public class DeleteRole extends HttpServlet {
                         if (!f.isDirectory() && f.getName().endsWith(".yml")) {
                             AnsObject pb = new AnsObject(null, f, new FileReader(f));
                             if (pb.removeElement(name.getValue())) {
-                                MyWriter ymlOut = new MyWriter();
-                                YamlConfig config = new YamlConfig();
-                                config.writeConfig.setWrapColumn(150);
-                                YamlWriter writer = new YamlWriter(ymlOut, config);
-                                writer.write(pb.object);
-                                writer.close();
+                                String ymlOut = pb.makeString();                                
                                 try (PrintWriter pw = new PrintWriter(f)) {
-                                    pw.print(ymlOut.toString());
+                                    pw.print(ymlOut);
                                 }
                             }
                         }
@@ -101,7 +96,7 @@ public class DeleteRole extends HttpServlet {
                     top.appendP("All of these handlers: " + role.handlers.keySet().toString());
                 }
                 if (!role.tasks.isEmpty()) {
-                    top.appendP("All of these tasks: " + role.tasks.keySet().toString());
+                    top.appendP("All of these tasks: " + role.getTaskNames().toString());
                 }
                 if (!role.templates.isEmpty()) {
                     top.appendP("All of these templates: " + role.templates.keySet().toString());

@@ -79,15 +79,11 @@ public class EditYml extends HttpServlet {
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
             out.println("<h1>" + fnam + "</h1>");
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
-            MyWriter toHtml = new MyWriter();
+            String toHtml = "";
             if (o != null && o.object != null) {
-                YamlConfig config = new YamlConfig();
-                config.writeConfig.setWrapColumn(150);
-                YamlWriter writer = new YamlWriter(toHtml, config);
-                writer.write(o.object);
-                writer.close();
+                toHtml=o.makeString();
             }
-            out.println(toHtml.toString());
+            out.println(JHFragment.html(toHtml));
             out.println("</textarea><br />");
             out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");
             out.println("</form>");

@@ -140,6 +140,13 @@ public class JHFragment {
         return ret;
     }
 
+    public CheckBox createCheckBox(JHParameter p, String thisValue) {
+        CheckBox ret = new CheckBox(current.getOwnerDocument().createElement("INPUT"), style, p, thisValue);
+        current.appendChild(ret.current);
+        ret.applyStyle();
+        return ret;
+    }
+
     public Select createSelect(JHParameter p) {
         Select ret = new Select(current.getOwnerDocument().createElement("SELECT"), style, p);
         current.appendChild(ret.current);
@@ -261,15 +268,21 @@ public class JHFragment {
      */
     public JHFragment appendA(String href, String text) {
         JHFragment ret = createElement("A").appendAttr("href", href).appendText(text);
-        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
-            Map.Entry<String, String> elm = it.next();
-            if (elm.getKey().equals("color")) {
-                it.remove();
-            }
-        }
-        ret.applyStyle();
+        ret.removeStyleElement("color");
         ret.appendAttr("class", "anchor");
         return ret;
+    }
+
+    public JHFragment removeStyleElement(String elmName) {
+        for (Iterator<Map.Entry<String, String>> it = style.entrySet().iterator(); it.hasNext();) {
+            Map.Entry<String, String> elm = it.next();
+            if (elm.getKey().equals(elmName)) {
+                it.remove();
+                break;
+            }
+        }
+        applyStyle();
+        return this;
     }
 
     /**
@@ -283,13 +296,7 @@ public class JHFragment {
      */
     public JHFragment appendA(String href, String target, String text) {
         JHFragment ret = createElement("A").appendAttr("href", href).appendAttr("target", target).appendText(text);
-        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
-            Map.Entry<String, String> elm = it.next();
-            if (elm.getKey().equals("color")) {
-                it.remove();
-            }
-        }
-        ret.applyStyle();
+        ret.removeStyleElement("color");
         ret.appendAttr("class", "anchor");
         return ret;
     }
@@ -305,13 +312,7 @@ public class JHFragment {
      */
     public JHFragment appendAImg(String href, String target, String url) {
         JHFragment ret = createElement("A").appendAttr("href", href).appendAttr("target", target).appendIMG(url);
-        for (Iterator<Map.Entry<String, String>> it = ret.style.entrySet().iterator(); it.hasNext();) {
-            Map.Entry<String, String> elm = it.next();
-            if (elm.getKey().equals("color")) {
-                it.remove();
-            }
-        }
-        ret.applyStyle();
+        ret.removeStyleElement("color");
         ret.appendAttr("class", "anchor");
         return ret;
     }

@@ -27,6 +27,19 @@ public class CheckBox extends JHFragment {
         }
     }
 
+    public CheckBox(Node parent, TreeMap<String, String> style, JHParameter p, String thisValue) {
+        super(parent, style);
+        this.p = p;
+        appendAttr("name", p.varName).appendAttr("type", "checkbox");
+        appendAttr("value", thisValue);
+        for (String v : p.values) {
+            if (v.equals(thisValue)) {
+                appendAttr("checked");
+                break;
+            }
+        }
+    }
+
     public CheckBox setAutoSubmit() {
         appendAttr("onChange", "this.form.submit()");
         return this;

@@ -100,20 +100,20 @@ public class PlayBook {
 
     public void toHtml(HttpServletRequest request, JHFragment top) {
         //System.out.println(request.getParameterMap());
-        JHParameter collP = new JHParameter(request, "collapse_" + inFile.getName(), "yes");
+        JHParameter expandP = new JHParameter(request, "expand_" + inFile.getName(), "yes");
         JHParameter collAll = new JHParameter(request, "coll_all_play");
         JHParameter expnAll = new JHParameter(request, "expn_all_play");
         if (collAll.wasSet) {
-            collP = JHParameter.overrideWasSet(collP, true);
+            expandP = JHParameter.overrideWasSet(expandP, false);
         }
         if (expnAll.wasSet) {
-            collP = JHParameter.overrideWasSet(collP, false);
+            expandP = JHParameter.overrideWasSet(expandP, true);
         }
-        top.createCheckBox(collP).appendAttr("onChange", "this.form.submit()").appendText(" ");
+        top.createCheckBox(expandP).appendAttr("onChange", "this.form.submit()").appendText(" ");
         top.createElement("A").appendAttr("id", inFile.getName());
         JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + owner.shortFileName(inFile));
         top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "_blank", "icons/delete.png");
-        if (collP.wasSet) {
+        if (!expandP.wasSet) {
             top.createElement("hr");
         } else {
             top.push("ul");
@@ -139,8 +139,8 @@ public class PlayBook {
                     if (rd != null) {
                         top.appendTD(rd.name);
                         top.push("td");
-                        for (Map.Entry<String, RoleFileMap> e : rd.tasks.entrySet()) {
-                            top.appendA("EditYml?file=" + e.getValue().file.getAbsolutePath(), "_blank", e.getKey());
+                        for (Task e : rd.tasks) {
+                            top.appendA("EditYml?file=" + e.file.getAbsolutePath(), "_blank", e.name);
                             top.createElement("br");
                         }
                         top.pop().push("td");

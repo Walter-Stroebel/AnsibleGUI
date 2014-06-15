@@ -16,12 +16,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.UUID;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspWriter;
 import nl.infcomtec.javahtml.JHDocument;
@@ -47,6 +47,10 @@ public class PlayBooks {
     private JHParameter parAddPlaybookRoles;
     private JHParameter parNewRole;
     private JHParameter parSubmitPlaybook;
+    private JHParameter parEditRole;
+    private JHParameter parMoveTasksToNewRole;
+    private JHParameter parSubmitMoveTasksToNewRole;
+    private JHParameter parSelectedTasks;
 
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
         this.directory = directory;
@@ -107,22 +111,52 @@ public class PlayBooks {
             frag.push("tr");
             frag.push("td");
             frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
-            if (e.meta!=null){
+            if (e.meta != null) {
                 e.meta.toHtml(frag);
             }
             frag.push("td");
             boolean first = true;
-            for (Map.Entry<String, RoleFileMap> e2 : e.tasks.entrySet()) {
+            for (Task e2 : e.tasks) {
                 if (!first) {
                     frag.createElement("br");
                 }
-                frag.appendA("EditYml?file=" + e2.getValue().file.getAbsolutePath(), "_blank", e2.getKey());
-                frag.appendAImg("DeleteTask?file=" + e2.getValue().file.getAbsolutePath() + "&task=" + e2.getKey(), "_blank", "icons/delete.png");
+                frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), "_blank", e2.name);
+                frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "_blank", "icons/delete.png");
                 first = false;
             }
             frag.pop();
             frag.pop();
         }
+    }
+
+    public void editRolesTable(JHFragment frag, HttpServletRequest request, Role e) {
+        frag.push("tr");
+        frag.appendTD("Role");
+        frag.appendTD("Task(s)");
+        frag.pop();
+        frag.push("tr");
+        frag.push("td");
+        frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
+        if (e.meta != null) {
+            e.meta.toHtml(frag);
+        }
+        frag.push("td");
+        boolean first = true;
+        for (Task e2 : e.tasks) {
+            if (!first) {
+                frag.createElement("br");
+            }
+            String selName = makeTaskSelector(e.name, e2.name);
+            if (selName != null) {
+                frag.createCheckBox(parSelectedTasks, selName);
+                frag.appendText(" ");
+            }
+            frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), "_blank", e2.name);
+            frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "_blank", "icons/delete.png");
+            first = false;
+        }
+        frag.pop();
+        frag.pop();
     }
 
     public void scan() throws YamlException, FileNotFoundException {
@@ -285,14 +319,14 @@ public class PlayBooks {
                             if (aFile.getName().startsWith(".")) {
                                 continue;
                             }
-                            if (aFile.getName().endsWith(".yml")){
+                            if (aFile.getName().endsWith(".yml")) {
                                 try {
                                     role.meta = new AnsObject(this, aFile, new FileReader(aFile));
-                                } catch (Exception ex){
+                                } catch (Exception ex) {
                                     randomFiles.add(aFile);
                                 }
-                            }else{
-                                    randomFiles.add(aFile);
+                            } else {
+                                randomFiles.add(aFile);
                             }
                         }
                         break;
@@ -335,7 +369,9 @@ public class PlayBooks {
     }
 
     private void readTasks(File aTask, Role role, TreeSet<File> all) throws FileNotFoundException, YamlException {
-        all.remove(aTask);
+        if (all != null) {
+            all.remove(aTask);
+        }
         if (aTask.getName().endsWith(".yml")) {
             try {
                 AnsObject task = new AnsObject(this, aTask, new FileReader(aTask));
@@ -351,9 +387,9 @@ public class PlayBooks {
                             tnam = (String) t.get("when");
                         }
                         if (tnam == null) {
-                            tnam = "??? " + UUID.randomUUID().toString();
+                            tnam = "??? " + role.tasks.size();
                         }
-                        role.tasks.put(tnam, new RoleFileMap(aTask, t));
+                        role.tasks.add(new Task(tnam, aTask, t));
                     }
                 }
             } catch (Exception ex) {
@@ -453,6 +489,58 @@ public class PlayBooks {
         doc.write(out);
     }
 
+    public void processEditRoleForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+        parEditRole = new JHParameter(request, "editRole", "");
+        parMoveTasksToNewRole = new JHParameter(request, "moveTasksToNewRole", "");
+        parSubmitMoveTasksToNewRole = new JHParameter(request, "submitMoveTasksToNewRole", "Do it!");
+        parSelectedTasks = new JHParameter(request, "selectedTasks", "");
+        if (parMoveTasksToNewRole.notEmpty() && parSubmitMoveTasksToNewRole.wasSet) {
+            Role rOld = new Role(parEditRole.getValue());
+            Role rNew = new Role(parMoveTasksToNewRole.getValue());
+            File rolesF = new File(directory, "roles");
+            File roleF = new File(rolesF, parEditRole.getValue());
+            File tasksF = new File(roleF, "tasks");
+            File oldTaskF = new File(tasksF, "main.yml");
+            readTasks(oldTaskF, rOld, null);
+            for (Iterator<Task> it = rOld.tasks.iterator(); it.hasNext();) {
+                Task t = it.next();
+                String tSel = makeTaskSelector(rOld.name, t.name);
+                for (String sel : parSelectedTasks.values) {
+                    if (sel.equals(tSel)) {
+                        it.remove();
+                        rNew.tasks.add(t);
+                    }
+                }
+            }
+            if (!rNew.tasks.isEmpty()) {
+                File roleFN = new File(rolesF, parMoveTasksToNewRole.getValue());
+                File tasksFN = new File(roleFN, "tasks");
+                tasksFN.mkdirs();
+                File newTaskF = new File(tasksFN, "main.yml");
+                {
+                    ArrayList<Map> tmp = new ArrayList<>();
+                    for (Task t : rNew.tasks) {
+                        tmp.add(t.map);
+                    }
+                    try (PrintWriter pw = new PrintWriter(newTaskF)) {
+                        pw.print(AnsObject.makeString(tmp));
+                    }
+                }
+                {
+                    ArrayList<Map> tmp = new ArrayList<>();
+                    for (Task t : rOld.tasks) {
+                        tmp.add(t.map);
+                    }
+                    try (PrintWriter pw = new PrintWriter(oldTaskF)) {
+                        pw.print(AnsObject.makeString(tmp));
+                    }
+                }
+                parMoveTasksToNewRole=parMoveTasksToNewRole.clear();
+                parSelectedTasks=parSelectedTasks.clear();
+            }
+        }
+    }
+
     public void processNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
         parNewPlayBook = new JHParameter(request, "newPlayBook", "");
         parAddPlaybookRoles = new JHParameter(request, "addPlaybookRoles", "");
@@ -503,7 +591,9 @@ public class PlayBooks {
     public void writeNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("float", "left");
         top.push("table").appendAttr("border", "1");
+        top.removeStyleElement("float");
         top.push("tr");
         top.createElement("th").appendAttr("colspan", "2").appendText("Create a new playbook.");
         top.pop();
@@ -530,10 +620,74 @@ public class PlayBooks {
         top.push("td");
         top.createInput("text", parNewRole);
         top.pop("tr");
-        top.push("tr").appendAttr("colspan", "2");
-        top.push("td");
+        top.push("tr");
+        top.push("td").appendAttr("colspan", "2");
         top.createInput("submit", parSubmitPlaybook);
         doc.write(out);
+    }
+
+    public void writeEditRoleForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("float", "left");
+        top.push("table").appendAttr("border", "1");
+        top.removeStyleElement("float");
+        top.push("tr");
+        top.createElement("th").appendAttr("colspan", "2").appendText("Edit a role.");
+        top.pop();
+        top.push("tr");
+        top.appendTD("Select the role to edit:");
+        top.push("td");
+        String rolesSize = "4";
+        if (!roles.isEmpty()) {
+            rolesSize = "" + Math.max(roles.size(), 10);
+        }
+        Select sel = top.createSelect(parEditRole);
+        sel.setAutoSubmit();
+        sel.appendAttr("size", rolesSize);
+        sel.addOption("", "");
+        for (String rnam : roles.keySet()) {
+            sel.addOption(rnam, rnam);
+        }
+        top.pop("tr");
+        if (parEditRole.notEmpty()) {
+            Role r = roles.get(parEditRole.getValue());
+            editRolesTable(top, request, r);
+            top.push("tr");
+            top.appendTD("Move selected:");
+            top.push("td");
+            top.appendText("New role:");
+            top.createInput("text", parMoveTasksToNewRole);
+            top.appendText(" ");
+            top.createInput("submit", parSubmitMoveTasksToNewRole);
+            top.pop("tr");
+            top.push("tr");
+            top.appendTD("Add a new task:");
+            top.push("td");
+            top.appendText("Task name: [new task]");
+            top.appendText("[do it]");
+            top.pop("tr");
+            top.push("tr");
+            top.appendTD("Merge with role:");
+            top.push("td");
+            top.appendText("[select role]");
+            top.appendText("[do it]");
+            top.pop("tr");
+        }
+        doc.write(out);
+    }
+
+    private String makeTaskSelector(String roleName, String taskName) {
+        if (taskName.contains("?")) {
+            return null;
+        }
+        StringBuilder ret = new StringBuilder(roleName + "_" + taskName);
+        for (int i = 0; i < ret.length(); i++) {
+            if (!Character.isJavaIdentifierPart(ret.charAt(i))) {
+                ret.setCharAt(i, '_');
+            }
+        }
+        return ret.toString();
     }
 
     public static class Variable {

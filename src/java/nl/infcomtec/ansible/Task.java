@@ -11,13 +11,15 @@ import java.util.Map;
  *
  * @author walter
  */
-public class RoleFileMap {
+public class Task {
+public final String name;
     public final File file;
     public final Map map;
 
-    public RoleFileMap(File theFile, Map theMap) {
-        this.file = theFile;
-        this.map = theMap;
+    public Task(String name, File aTask, Map t) {
+        this.name=name;
+        this.file = aTask;
+        this.map = t;
     }
 
 }

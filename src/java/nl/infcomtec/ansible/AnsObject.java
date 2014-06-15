@@ -4,10 +4,14 @@
  */
 package nl.infcomtec.ansible;
 
+import com.esotericsoftware.yamlbeans.YamlConfig;
 import com.esotericsoftware.yamlbeans.YamlException;
 import com.esotericsoftware.yamlbeans.YamlReader;
+import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +23,42 @@ import nl.infcomtec.javahtml.JHFragment;
  * @author walter
  */
 public class AnsObject {
+
+    /**
+     *
+     * @author walter
+     */
+    private static class MyWriter extends Writer {
+
+        private final StringBuilder out;
+
+        public MyWriter() {
+            out = new StringBuilder();
+        }
+
+        @Override
+        public void write(char[] cbuf, int off, int len) throws IOException {
+            out.append(cbuf, off, len);
+        }
+
+        @Override
+        public void flush() throws IOException {
+        }
+
+        @Override
+        public void close() throws IOException {
+            for (int dash = out.indexOf("\n-"); dash != -1; dash = out.indexOf("\n-", dash)) {
+                out.insert(dash, '\n');
+                dash += 3;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return out.toString();
+        }
+
+    }
 
     public static Map<Object, Object> getMap(Object object) {
         if (object instanceof Map) {
@@ -117,5 +157,35 @@ public class AnsObject {
 
     public void toHtml(JHFragment frag) {
         toHtml(frag, object);
+    }
+
+    /**
+     * Serialize any object to YAML. Special feature: adds blank lines to
+     * top-level list elements.
+     *
+     * @param obj The object to serialize.
+     * @return A String with the serialized object.
+     * @throws YamlException If YamlWriter does.
+     */
+    public static String makeString(Object obj) throws YamlException {
+        MyWriter myw = new MyWriter();
+        YamlConfig config = new YamlConfig();
+        config.writeConfig.setWrapColumn(150);
+        YamlWriter writer = new YamlWriter(myw, config);
+        writer.write(obj);
+        writer.close();
+        return myw.toString();
+
+    }
+
+    /**
+     * Serialize this object to YAML. Special feature: adds blank lines to
+     * top-level list elements.
+     *
+     * @return A String with the serialized object.
+     * @throws YamlException If YamlWriter does.
+     */
+    public String makeString() throws YamlException {
+        return makeString(object);
     }
 }
