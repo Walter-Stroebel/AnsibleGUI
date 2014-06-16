@@ -46,7 +46,14 @@
         </style>
         <title>AnsibleGUI</title>
     </head>
-    <body style="background-color: darkslateblue; color: white;">
+    <body style="
+          margin:0px;
+          padding:5px;
+          border:0px;
+          background-color: darkslateblue; 
+          color: white; 
+          float: left;
+          ">
         <form action="index.jsp" method="POST">
             <p>Path:
                 <input type="text" value="<%=ansPath%>" placeholder="Full path to your ansible files" size="50" name="anspath" />
@@ -59,13 +66,19 @@
             </p>
             <%
                 if (!ansPath.isEmpty()) {
+                    if (!new File(ansPath).exists()) {
+                        out.println("That is not a valid path.");
+                        ansPath = "";
+                    }
+                }
+                if (!ansPath.isEmpty()) {
                     PlayBooks books = new PlayBooks(new File(ansPath));
                     books.processNewPlayBookForm(request, out);
                     books.processEditRoleForm(request, out);
                     books.scan();
                     books.writeNewPlayBookForm(request, out);
                     books.writeEditRoleForm(request, out);
-                    out.println("<div style=\"clear: both;\" />");
+                    out.println("<div style=\"clear: both;\" > </div>");
                     books.writePlayBooks(request, out);
                     books.writeRoles(request, out);
                     books.writeVariables(request, out);
@@ -73,5 +86,6 @@
                 }
             %>        
         </form>
+
     </body>
 </html>
