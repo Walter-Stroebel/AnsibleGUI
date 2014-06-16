@@ -191,16 +191,20 @@ public class PlayBooks {
                         if (hv.isDirectory()) {
                             randomFiles.add(hv);
                         }
-                        AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                        for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
-                            Variable vre = vars.get(e.getKey().toString());
-                            if (vre == null) {
-                                vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
-                                vars.put(e.getKey().toString(), vre);
-                            } else {
-                                vre.definedIn.add(hv);
-                                vre.values.add(e.getValue().toString());
+                        try {
+                            AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
+                            for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
+                                Variable vre = vars.get(e.getKey().toString());
+                                if (vre == null) {
+                                    vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
+                                    vars.put(e.getKey().toString(), vre);
+                                } else {
+                                    vre.definedIn.add(hv);
+                                    vre.values.add(e.getValue().toString());
+                                }
                             }
+                        } catch (Exception any) {
+                            randomFiles.add(hv);
                         }
                     }
                 } else if ("group_vars".equals(f.getName())) {
@@ -211,16 +215,20 @@ public class PlayBooks {
                         if (hv.isDirectory()) {
                             randomFiles.add(hv);
                         }
-                        AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                        for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
-                            Variable vre = vars.get(e.getKey().toString());
-                            if (vre == null) {
-                                vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
-                                vars.put(e.getKey().toString(), vre);
-                            } else {
-                                vre.definedIn.add(hv);
-                                vre.values.add(e.getValue().toString());
+                        try {
+                            AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
+                            for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
+                                Variable vre = vars.get(e.getKey().toString());
+                                if (vre == null) {
+                                    vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
+                                    vars.put(e.getKey().toString(), vre);
+                                } else {
+                                    vre.definedIn.add(hv);
+                                    vre.values.add(e.getValue().toString());
+                                }
                             }
+                        } catch (Exception any) {
+                            randomFiles.add(hv);
                         }
                     }
                 } else {
