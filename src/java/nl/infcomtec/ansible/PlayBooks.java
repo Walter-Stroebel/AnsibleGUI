@@ -711,6 +711,21 @@ public class PlayBooks {
             parNewPlayBook = parNewPlayBook.clear();
             parAddPlaybookRoles = parAddPlaybookRoles.clear();
             parNewRole = parNewRole.clear();
+        } else if (parSubmitPlaybook.wasSet && parNewRole.notEmpty()) {
+            String newRole = parNewRole.getValue().trim().replace(' ', '_');
+            if (!newRole.isEmpty()) {
+                File rdir = new File(directory, "roles/" + newRole + "/tasks");
+                rdir.mkdirs();
+                File dontOverwrite = new File(rdir, "main.yml");
+                if (!dontOverwrite.exists()) {
+                    try (FileWriter fw = new FileWriter(dontOverwrite)) {
+                        fw.write("- name: ");
+                        fw.write(newRole);
+                        fw.write("_task\n");
+                    }
+                }
+            }
+            parNewRole = parNewRole.clear();
         }
     }
 
