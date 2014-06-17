@@ -14,7 +14,6 @@ import java.io.FileWriter;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -298,7 +297,8 @@ public class PlayBooks {
                             AnsObject hand = new AnsObject(this, aHandler, new FileReader(aHandler));
                             List<Map> hands;
                             if (hand.object instanceof Map) {
-                                hands = Collections.singletonList((Map) hand.object);
+                                hands = new ArrayList<>();
+                                hands.add((Map) hand.object);
                             } else {
                                 hands = (List<Map>) hand.object;
                             }
@@ -564,7 +564,9 @@ public class PlayBooks {
                         }
                     } else {
                         try (PrintWriter pw = new PrintWriter(keepFile)) {
-                            pw.print(AnsObject.makeString(Collections.singletonList(e.map)));
+                            ArrayList<Map> wl = new ArrayList<>();
+                            wl.add(e.map);
+                            pw.print(AnsObject.makeString(wl));
                         }
                     }
                 }
@@ -701,7 +703,9 @@ public class PlayBooks {
                 YamlWriter yw = new YamlWriter(writer);
                 Map rm = new HashMap();
                 rm.put("roles", rolez);
-                yw.write(Collections.singletonList(rm));
+                ArrayList<Map> wl = new ArrayList<>();
+                wl.add(rm);
+                yw.write(wl);
                 yw.close();
             }
             parNewPlayBook = parNewPlayBook.clear();
