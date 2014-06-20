@@ -52,8 +52,12 @@ public class PlayBooks {
     private JHParameter parSelectedTasks;
     private JHParameter parMergeRole;
     private JHParameter parSubmitMergeRole;
+    public AnsInventory inv;
 
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
+        if (directory==null){
+            throw new RuntimeException("Huh?");
+        }
         this.directory = directory;
         dirPath = directory.getAbsolutePath();
         dirPathLen = dirPath.length() + 1;
@@ -165,7 +169,8 @@ public class PlayBooks {
         playBooks.clear();
         randomFiles.clear();
         roles.clear();
-        vars.clear();
+        //vars.clear();
+        System.out.println(""+directory);
         for (File f : directory.listFiles()) {
             if (f.getName().startsWith(".")) {
                 continue;
@@ -857,5 +862,36 @@ public class PlayBooks {
             this(name, value);
             definedIn.add(definer);
         }
+    }
+
+    public void processEditInventory(final HttpServletRequest request, final JspWriter out, String ansInv) throws Exception {
+        File fi = new File(ansInv);
+        if (fi.exists()) {
+            this.inv = new AnsInventory(this, fi);
+        }
+    }
+
+    public void writeEditInventory(final HttpServletRequest request, final JspWriter out) throws Exception {
+        JHDocument doc = new JHDocument();
+        JHFragment top = new JHFragment(doc, "div");
+        top.setStyleElement("float", "left");
+        top.push("table").appendAttr("border", "1");
+        top.removeStyleElement("float");
+        if (inv != null) {
+            for (Map.Entry<String, TreeSet<String>> e : inv.groups.entrySet()) {
+                top.push("tr");
+                top.createElement("th").appendAttr("rowspan", "" + e.getValue().size()).appendText(e.getKey());
+                boolean first = true;
+                for (String h : e.getValue()) {
+                    if (!first) {
+                        top.push("tr");
+                    }
+                    first = false;
+                    top.createElement("td").appendText(h);
+                    top.pop("tr");
+                }
+            }
+        }
+        doc.write(out);
     }
 }

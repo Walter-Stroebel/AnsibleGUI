@@ -4,15 +4,11 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlConfig;
 import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.io.StringWriter;
-import java.io.Writer;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -39,6 +35,10 @@ public class EditYml extends HttpServlet {
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
         String fnam = request.getParameter("file");
+        if (request.getParameter("oops") != null) {
+            response.sendRedirect("EditAny?file=" + fnam);
+            return;
+        }
         File f = new File(fnam);
         AnsObject o;
         try {
@@ -79,6 +79,7 @@ public class EditYml extends HttpServlet {
             out.println("<form action=\"EditYml\" method=\"POST\">");
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
             out.println("<h1>" + fnam + "</h1>");
+            out.println("<p>This does not look right; <input type=\"submit\" name=\"oops\" value=\"Open in text editor instead\" /></p>");
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
             String toHtml = "";
             if (o != null && o.object != null) {

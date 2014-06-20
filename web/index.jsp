@@ -28,6 +28,24 @@
     if (hasGIT && request.getParameter("GIT") != null) {
         response.sendRedirect("MiniGIT");
     }
+    String ansInv = request.getParameter("ansinv") != null ? request.getParameter("ansinv").trim() : "";
+    if (ansInv.isEmpty()) {
+        if (session.getAttribute("ansinv") != null) {
+            ansInv = session.getAttribute("ansinv").toString();
+        }
+    } else {
+        session.setAttribute("ansinv", ansInv);
+    }
+    if (!ansInv.isEmpty()){
+        File make_abs = new File(ansInv);
+        if (!make_abs.exists()){
+            make_abs=new File(ansPath,ansInv);
+            if (make_abs.exists()){
+                ansInv=make_abs.getAbsolutePath();
+                session.setAttribute("ansinv", ansInv);
+            } // else ah well, we tried.            
+        } // else all is well, we hope.
+    }
 %>
 <!DOCTYPE html>
 <html>
@@ -57,16 +75,16 @@
         <form action="index.jsp" method="POST">
             <p>Path:
                 <input type="text" value="<%=ansPath%>" placeholder="Full path to your ansible files" size="50" name="anspath" />
+                <input type="text" value="<%=ansInv%>" placeholder="Use inventory (optional; can be full path)" size="50" name="ansinv" />
                 <input type="submit" value="Refresh" />
                 <% if (hasGIT) { %>
                 <input type="submit" name="GIT" value="Git..." />
                 <% } %>
-                <input type="submit" name="coll_all_play" value="Collapse all playbooks" />
-                <input type="submit" name="expn_all_play" value="Expand all playbooks" />
             </p>
             <%
                 if (!ansPath.isEmpty()) {
-                    if (!new File(ansPath).exists()) {
+                    File test = new File(ansPath);
+                    if (!test.exists()||!test.isDirectory()) {
                         out.println("That is not a valid path.");
                         ansPath = "";
                     }
@@ -75,10 +93,16 @@
                     PlayBooks books = new PlayBooks(new File(ansPath));
                     books.processNewPlayBookForm(request, out);
                     books.processEditRoleForm(request, out);
+                    books.processEditInventory(request, out, ansInv);
                     books.scan();
                     books.writeNewPlayBookForm(request, out);
                     books.writeEditRoleForm(request, out);
-                    out.println("<div style=\"clear: both;\" > </div>");
+                    books.writeEditInventory(request, out);
+            %>
+            <div style="clear: both;" > </div>
+            <input type="submit" name="coll_all_play" value="Collapse all playbooks" />
+            <input type="submit" name="expn_all_play" value="Expand all playbooks" />
+            <%
                     books.writePlayBooks(request, out);
                     books.writeRoles(request, out);
                     books.writeVariables(request, out);

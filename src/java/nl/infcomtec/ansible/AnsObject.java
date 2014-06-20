@@ -170,7 +170,8 @@ public class AnsObject {
     public static String makeString(Object obj) throws YamlException {
         MyWriter myw = new MyWriter();
         YamlConfig config = new YamlConfig();
-        config.writeConfig.setWrapColumn(150);
+        config.writeConfig.setWrapColumn(Integer.MAX_VALUE);
+        config.writeConfig.setExplicitFirstDocument(true);
         YamlWriter writer = new YamlWriter(myw, config);
         writer.write(obj);
         writer.close();
