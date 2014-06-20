@@ -45,7 +45,7 @@ public class PlayBook {
                         if (o instanceof String) {
                             l.add(o.toString());
                         } else if (o instanceof Map) {
-                            Map<String, Object> rmap = (Map<String, Object>) o;
+                            Map<Object, Object> rmap = (Map<Object, Object>) o;
                             //System.out.println(rmap);
                             String rname = (String) rmap.remove("role");
                             l.add(rname);
@@ -53,17 +53,7 @@ public class PlayBook {
                             if (parRole == null) {
                                 parRole = new Role(rname);
                             }
-                            for (Map.Entry<String, Object> e : rmap.entrySet()) {
-                                PlayBooks.Variable vre = parRole.vars.get(e.getKey());
-                                if (vre == null) {
-                                    vre = new PlayBooks.Variable(f, e.getKey(), e.getValue().toString());
-                                } else {
-                                    vre.definedIn.add(f);
-                                    vre.values.add(e.getValue().toString());
-                                }
-                                vre.usedBy.add(f);
-                                parRole.vars.put(e.getKey(), vre);
-                            }
+                            AnsVariable.addOrUpdate(parRole.vars, f, rmap, null);
                             owner.roles.put(rname, parRole);
                             //System.out.println(rmap);
                         } else {

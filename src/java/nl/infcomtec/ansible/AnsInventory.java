@@ -8,9 +8,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.TreeSet;
+import java.io.PrintWriter;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
+import java.util.TreeSet;
 
 /**
  *
@@ -18,12 +21,21 @@ import java.util.TreeMap;
  */
 public class AnsInventory {
 
+    public final TreeMap<String, TreeMap<String, String>> vars = new TreeMap<>();
     public final TreeMap<String, TreeSet<String>> groups = new TreeMap<>();
     public final TreeMap<String, TreeSet<String>> hosts = new TreeMap<>();
     public final File file;
 
-    public AnsInventory(PlayBooks books, File file) throws IOException {
+    public AnsInventory(File pbDir, File file) throws IOException {
         this.file = file;
+        File groupVars = new File(pbDir, "group_vars");
+        if (!groupVars.exists()) {
+            groupVars.mkdir();
+        }
+        File hostVars = new File(pbDir, "host_vars");
+        if (!hostVars.exists()) {
+            hostVars.mkdir();
+        }
         try (BufferedReader bfr = new BufferedReader(new FileReader(file))) {
             String group = "all";
             for (String _s = bfr.readLine(); _s != null; _s = bfr.readLine()) {
@@ -34,6 +46,24 @@ public class AnsInventory {
                 if (s.startsWith("[")) {
                     if (s.contains(":vars")) {
                         group = s.substring(1, s.indexOf(':'));
+                        File gf = new File(groupVars, group);
+                        Map<Object, Object> map = new HashMap();
+                        if (gf.exists()) {
+                            try {
+                                AnsObject ao = new AnsObject(null, gf, new FileReader(gf));
+                                if (ao.getMap() != null) {
+                                    map.putAll(ao.getMap());
+                                }
+                            } catch (Exception any) {
+                            }
+                        }
+                        TreeMap<String, String> gvars = vars.get("g_" + group);
+                        if (gvars == null) {
+                            gvars = new TreeMap<>();
+                        }
+                        for (Map.Entry<Object, Object> e : map.entrySet()) {
+                            gvars.put(e.getKey().toString(), e.getValue().toString());
+                        }
                         bfr.mark(1000);
                         for (_s = bfr.readLine(); _s != null; _s = bfr.readLine()) {
                             s = _s.trim();
@@ -45,16 +75,16 @@ public class AnsInventory {
                             }
                             bfr.mark(1000);
                             String[] vd = s.split("=");
-                            PlayBooks.Variable v = books.vars.get(vd[0]);
-                            if (v == null) {
-                                v = new PlayBooks.Variable(file, vd[0], vd[1]);
-                                books.vars.put(vd[0], v);
-                            } else {
-                                v.definedIn.add(file);
-                                v.values.add(vd[1]);
-                            }
+                            gvars.put(vd[0], vd[1]);
                         }
                         bfr.reset();
+                        map.clear();
+                        for (Map.Entry<String, String> e : gvars.entrySet()) {
+                            map.put(e.getKey(), e.getValue());
+                        }
+                        try (PrintWriter pw = new PrintWriter(gf)) {
+                            pw.print(AnsObject.makeString(map));
+                        }
                     } else {
                         group = s.substring(1, s.length() - 1);
                     }
@@ -68,7 +98,7 @@ public class AnsInventory {
                     l.add(host);
                     l = groups.get("all");
                     if (l == null) {
-                        groups.put(group, l = new TreeSet<>());
+                        groups.put("all", l = new TreeSet<>());
                     }
                     l.add(host);
                     l = hosts.get(host);
@@ -76,17 +106,29 @@ public class AnsInventory {
                         hosts.put(host, l = new TreeSet<>());
                     }
                     l.add(group);
+                    l.add("all");
+                    File hf = new File(hostVars, host);
+                    Map<Object, Object> map = new HashMap();
+                    if (hf.exists()) {
+                        try {
+                            AnsObject ao = new AnsObject(null, hf, new FileReader(hf));
+                            if (ao.getMap() != null) {
+                                map.putAll(ao.getMap());
+                            }
+                        } catch (Exception any) {
+                        }
+                    }
+                    TreeMap<String, String> hvars = vars.get("h_" + host);
+                    if (hvars == null) {
+                        hvars = new TreeMap<>();
+                    }
+                    for (Map.Entry<Object, Object> e : map.entrySet()) {
+                        hvars.put(e.getKey().toString(), e.getValue().toString());
+                    }
                     if (toker.hasMoreTokens()) {
                         String tok = toker.nextToken();
                         if (tok.equals(":") && toker.hasMoreTokens()) {
-                            PlayBooks.Variable v = books.vars.get("ansible_ssh_port");
-                            if (v == null) {
-                                v = new PlayBooks.Variable(file, "ansible_ssh_port", toker.nextToken());
-                                books.vars.put("ansible_ssh_port", v);
-                            } else {
-                                v.definedIn.add(file);
-                                v.values.add(toker.nextToken());
-                            }
+                            hvars.put("ansible_ssh_port", toker.nextToken());
                             if (toker.hasMoreTokens()) {
                                 tok = toker.nextToken();
                             } else {
@@ -97,23 +139,25 @@ public class AnsInventory {
                             tok = tok.trim();
                             if (!tok.isEmpty()) {
                                 String[] vd = tok.split("=");
-                                if (vd.length==2){
-                                    PlayBooks.Variable v = books.vars.get(vd[0]);
-                                    if (v == null) {
-                                        v = new PlayBooks.Variable(file, vd[0], vd[1]);
-                                        books.vars.put(vd[0], v);
-                                    } else {
-                                        v.definedIn.add(file);
-                                        v.values.add(vd[1]);
-                                    }
-                                }else break;
+                                if (vd.length == 2) {
+                                    hvars.put(vd[0], vd[1]);
+                                } else {
+                                    break;
+                                }
                             }
                             if (toker.hasMoreTokens()) {
                                 tok = toker.nextToken();
-                            }else {
-                                tok="";
+                            } else {
+                                tok = "";
                             }
-                        } while (!tok.isEmpty()||toker.hasMoreTokens());
+                        } while (!tok.isEmpty() || toker.hasMoreTokens());
+                        map.clear();
+                        for (Map.Entry<String, String> e : hvars.entrySet()) {
+                            map.put(e.getKey(), e.getValue());
+                        }
+                        try (PrintWriter pw = new PrintWriter(hf)) {
+                            pw.print(AnsObject.makeString(map));
+                        }
                     }
                 }
             }

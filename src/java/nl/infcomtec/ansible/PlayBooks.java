@@ -39,7 +39,7 @@ public class PlayBooks {
     public final LinkedList<File> randomFiles = new LinkedList<>();
     public final File directory;
     private final String dirPath;
-    public final TreeMap<String, Variable> vars = new TreeMap<>();
+    public final TreeMap<String, AnsVariable> vars = new TreeMap<>();
     private final int dirPathLen;
 
     private JHParameter parNewPlayBook;
@@ -55,7 +55,7 @@ public class PlayBooks {
     public AnsInventory inv;
 
     public PlayBooks(File directory) throws YamlException, FileNotFoundException {
-        if (directory==null){
+        if (directory == null) {
             throw new RuntimeException("Huh?");
         }
         this.directory = directory;
@@ -84,7 +84,7 @@ public class PlayBooks {
         frag.appendTD("Defined in");
         frag.appendTD("Used by");
         frag.pop();
-        for (Variable e : vars.values()) {
+        for (AnsVariable e : vars.values()) {
             if (e.definedIn.isEmpty() && !showUndefd) {
                 continue;
             }
@@ -170,7 +170,7 @@ public class PlayBooks {
         randomFiles.clear();
         roles.clear();
         //vars.clear();
-        System.out.println(""+directory);
+        System.out.println("" + directory);
         for (File f : directory.listFiles()) {
             if (f.getName().startsWith(".")) {
                 continue;
@@ -197,16 +197,12 @@ public class PlayBooks {
                         }
                         try {
                             AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                            for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
-                                Variable vre = vars.get(e.getKey().toString());
-                                if (vre == null) {
-                                    vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
-                                    vars.put(e.getKey().toString(), vre);
-                                } else {
-                                    vre.definedIn.add(hv);
-                                    vre.values.add(e.getValue().toString());
-                                }
+                            TreeMap<String, String> hvars = inv.vars.get("h_" + hv.getName());
+                            if (hvars == null) {
+                                hvars = new TreeMap<>();
+                                inv.vars.put("h_" + hv.getName(), hvars);
                             }
+                            AnsVariable.addOrUpdate(vars, hv, ao.getMap(), hvars);
                         } catch (Exception any) {
                             randomFiles.add(hv);
                         }
@@ -221,16 +217,12 @@ public class PlayBooks {
                         }
                         try {
                             AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                            for (Map.Entry<Object, Object> e : ao.getMap().entrySet()) {
-                                Variable vre = vars.get(e.getKey().toString());
-                                if (vre == null) {
-                                    vre = new Variable(hv, e.getKey().toString(), e.getValue().toString());
-                                    vars.put(e.getKey().toString(), vre);
-                                } else {
-                                    vre.definedIn.add(hv);
-                                    vre.values.add(e.getValue().toString());
-                                }
+                            TreeMap<String, String> gvars = inv.vars.get("g_" + hv.getName());
+                            if (gvars == null) {
+                                gvars = new TreeMap<>();
+                                inv.vars.put("g_" + hv.getName(), gvars);
                             }
+                            AnsVariable.addOrUpdate(vars, hv, ao.getMap(), gvars);
                         } catch (Exception any) {
                             randomFiles.add(hv);
                         }
@@ -377,17 +369,7 @@ public class PlayBooks {
             if (ts.getName().endsWith(".yml")) {
                 try {
                     AnsObject var = new AnsObject(this, ts, new FileReader(ts));
-                    for (Map.Entry<Object, Object> e : var.getMap().entrySet()) {
-                        Variable vre = vars.get(e.getKey().toString());
-                        if (vre == null) {
-                            vre = new Variable(ts, e.getKey().toString(), e.getValue().toString());
-                            vars.put(e.getKey().toString(), vre);
-                        } else {
-                            vre.definedIn.add(ts);
-                            vre.values.add(e.getValue().toString());
-                        }
-                        role.vars.put(e.getKey().toString(), vre);
-                    }
+                    AnsVariable.addOrUpdate(vars, rd, var.getMap(), null);
                 } catch (Exception any) {
                     randomFiles.add(ts);
                 }
@@ -452,9 +434,9 @@ public class PlayBooks {
         while (idx >= 0) {
             int end = s.indexOf("}}", idx);
             String varName = s.substring(idx + 2, end).trim();
-            Variable var = vars.get(varName);
+            AnsVariable var = vars.get(varName);
             if (var == null) {
-                var = new Variable(varName);
+                var = new AnsVariable(varName);
                 vars.put(varName, var);
             }
             var.usedBy.add(inFile);
@@ -596,7 +578,7 @@ public class PlayBooks {
             // merge any vars
             {
                 File keepVarsDir = new File(keepF, "vars");
-                for (Variable e : rMerge.vars.values()) {
+                for (AnsVariable e : rMerge.vars.values()) {
                     for (File f : e.definedIn) {
                         AnsObject mergeObj = new AnsObject(null, f, new FileReader(f));
                         keepVarsDir.mkdir();
@@ -842,56 +824,36 @@ public class PlayBooks {
         return ret.toString();
     }
 
-    public static class Variable {
-
-        public final TreeSet<File> definedIn = new TreeSet<>();
-        public final TreeSet<File> usedBy = new TreeSet<>();
-        public final String name;
-        public final TreeSet<String> values = new TreeSet<>();
-
-        public Variable(final String name) {
-            this.name = name;
-        }
-
-        public Variable(final String name, final String value) {
-            this(name);
-            this.values.add(value);
-        }
-
-        public Variable(final File definer, final String name, final String value) {
-            this(name, value);
-            definedIn.add(definer);
-        }
-    }
-
     public void processEditInventory(final HttpServletRequest request, final JspWriter out, String ansInv) throws Exception {
         File fi = new File(ansInv);
         if (fi.exists()) {
-            this.inv = new AnsInventory(this, fi);
+            this.inv = new AnsInventory(this.directory, fi);
         }
     }
 
     public void writeEditInventory(final HttpServletRequest request, final JspWriter out) throws Exception {
+        if (inv == null) return;
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("float", "left");
         top.push("table").appendAttr("border", "1");
         top.removeStyleElement("float");
-        if (inv != null) {
+        top.push("tr");
+        top.createElement("th").appendAttr("colspan", "2").appendText("Edit/view the inventory.");
+        top.pop();
             for (Map.Entry<String, TreeSet<String>> e : inv.groups.entrySet()) {
                 top.push("tr");
-                top.createElement("th").appendAttr("rowspan", "" + e.getValue().size()).appendText(e.getKey());
+                top.createElement("th").appendAttr("rowspan", "" + e.getValue().size()).appendA("Inventory?group=" + e.getKey(), e.getKey());
                 boolean first = true;
                 for (String h : e.getValue()) {
                     if (!first) {
                         top.push("tr");
                     }
                     first = false;
-                    top.createElement("td").appendText(h);
+                    top.createElement("td").appendA("Inventory?host=" + h, h);
                     top.pop("tr");
                 }
             }
-        }
         doc.write(out);
     }
 }

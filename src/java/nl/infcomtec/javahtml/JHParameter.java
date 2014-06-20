@@ -103,7 +103,7 @@ public class JHParameter {
      * @return
      */
     public boolean notEmpty() {
-        return !isEmpty();
+        return values != null && values.length == 1 && !values[0].trim().isEmpty();
     }
 
     /**

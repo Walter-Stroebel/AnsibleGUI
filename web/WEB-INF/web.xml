@@ -28,6 +28,10 @@ about 32 K in size.</description>
         <servlet-name>DeletePlayBook</servlet-name>
         <servlet-class>nl.infcomtec.ansible.DeletePlayBook</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>Inventory</servlet-name>
+        <servlet-class>nl.infcomtec.ansible.Inventory</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>EditAny</servlet-name>
         <url-pattern>/EditAny</url-pattern>
@@ -51,6 +55,10 @@ about 32 K in size.</description>
     <servlet-mapping>
         <servlet-name>DeletePlayBook</servlet-name>
         <url-pattern>/DeletePlayBook</url-pattern>
+    </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>Inventory</servlet-name>
+        <url-pattern>/Inventory</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>

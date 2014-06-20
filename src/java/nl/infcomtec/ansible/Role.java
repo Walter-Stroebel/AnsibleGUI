@@ -20,7 +20,7 @@ public class Role {
     public final TreeMap<String, RoleFileMap> handlers = new TreeMap<>();
     public final TreeMap<String, File> files = new TreeMap<>();
     public final TreeMap<String, File> templates = new TreeMap<>();
-    public final TreeMap<String, PlayBooks.Variable> vars = new TreeMap<>();
+    public final TreeMap<String, AnsVariable> vars = new TreeMap<>();
     public AnsObject meta;
 
     public Role(String name) {
