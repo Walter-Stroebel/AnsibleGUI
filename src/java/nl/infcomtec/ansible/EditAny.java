@@ -39,6 +39,7 @@ public class EditAny extends HttpServlet {
         if (request.getParameter("save") != null) {
             try (PrintWriter pw = new PrintWriter(new File(fnam))) {
                 pw.print(request.getParameter("edit"));
+                response.sendRedirect("index.jsp");
             }
         }
         try (PrintWriter out = response.getWriter()) {
@@ -71,11 +72,13 @@ public class EditAny extends HttpServlet {
                 }
                 out.println("</textarea><br />");
                 out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");
+
             } else if (!can) {
                 out.println("<p>It does not seem a good idea to edit a <b>" + UnixFile.whatsThatFile(f) + "</b> as if it was text...</p>");
             } else {
                 out.println("<p>Sorry, applying an abbitrary limit of about 32K to maximum file size to edit, this file is " + f.length() + " bytes.</p>");
             }
+            out.println("<A href=\"index.jsp\">Cancel: return to the main page, discarding edits.</a>");
             out.println("</form>");
             out.println("</body>");
             out.println("</html>");

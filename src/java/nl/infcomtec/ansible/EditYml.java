@@ -55,6 +55,7 @@ public class EditYml extends HttpServlet {
             // and reload the file!
             try {
                 o = new AnsObject(null, f, new FileReader(f));
+                response.sendRedirect("index.jsp");
             } catch (YamlException ex) {
                 // not YAML (anymore), send to general editor to fix
                 response.sendRedirect("EditAny?warn=true&file=" + fnam);
@@ -86,6 +87,7 @@ public class EditYml extends HttpServlet {
             out.println(JHFragment.html(toHtml));
             out.println("</textarea><br />");
             out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");
+            out.println("<A href=\"index.jsp\">Cancel: return to the main page, discarding edits.</a>");
             out.println("</form>");
             out.println("</body>");
             out.println("</html>");

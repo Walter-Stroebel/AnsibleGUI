@@ -52,18 +52,18 @@ public class DeletePlayBook extends HttpServlet {
             top.push("body");
             if (fubar.wasSet) {
                 tFile.delete();
-                top.appendP("All done, you can close this window/tab now.");
+                top.appendA("index.jsp", "All done, return me to the main page.");
                 doc.write(out);
                 return;
             }
             top.push("form");
             top.appendAttr("action", "DeletePlayBook").appendAttr("method", "POST");
-            top.createInput("hidden", file);            
-            String myw = tObj.makeString();            
-            top.appendP("Delete playbook ["+tFile.getAbsolutePath()+"]?");
+            top.createInput("hidden", file);
+            String myw = tObj.makeString();
+            top.appendP("Delete playbook [" + tFile.getAbsolutePath() + "]?");
             top.createElement("pre").appendText(myw.toString());
             top.createInput("submit", fubar).setStyleElement("font-size", "larger");
-            top.appendP("(Else just close this window/tab).");
+            top.appendA("index.jsp", "(Else just return to the main page here).");
             doc.write(out);
         } catch (Exception ex) {
             throw new ServletException(ex);

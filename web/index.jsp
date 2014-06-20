@@ -50,8 +50,8 @@
           margin:0px;
           padding:5px;
           border:0px;
-          background-color: darkslateblue; 
-          color: white; 
+          background-color: linen; 
+          color: black; 
           float: left;
           ">
         <form action="index.jsp" method="POST">

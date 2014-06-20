@@ -124,8 +124,8 @@ public class PlayBook {
             top.appendText(" ");
         }
         top.createElement("A").appendAttr("id", inFile.getName());
-        JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "_blank", "Playbook -> " + owner.shortFileName(inFile));
-        top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "_blank", "icons/delete.png");
+        JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "Playbook -> " + owner.shortFileName(inFile));
+        top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "icons/delete.png");
         if (!expandP.wasSet) {
             top.createElement("hr");
         } else {
@@ -153,18 +153,18 @@ public class PlayBook {
                         top.appendTD(rd.name);
                         top.push("td");
                         for (Task e : rd.tasks) {
-                            top.appendA("EditYml?file=" + e.file.getAbsolutePath(), "_blank", e.name);
+                            top.appendA("EditYml?file=" + e.file.getAbsolutePath(), e.name);
                             top.createElement("br");
                         }
                         top.pop().push("td");
                         for (Map.Entry<String, RoleFileMap> e : rd.handlers.entrySet()) {
-                            top.appendA("EditYml?file=" + e.getValue().file.getAbsolutePath(), "_blank", e.getKey());
+                            top.appendA("EditYml?file=" + e.getValue().file.getAbsolutePath(), e.getKey());
                             top.createElement("br");
                         }
                         top.pop().push("td");
                         for (Map.Entry<String, File> e : rd.files.entrySet()) {
                             if (UnixFile.isItASCII(e.getValue())) {
-                                top.appendA("EditAny?file=" + e.getValue().getAbsolutePath(), "_blank", e.getKey());
+                                top.appendA("EditAny?file=" + e.getValue().getAbsolutePath(), e.getKey());
                             } else {
                                 top.appendText(e.getKey());
                             }
@@ -173,7 +173,7 @@ public class PlayBook {
                         top.pop().push("td");
                         for (Map.Entry<String, File> e : rd.templates.entrySet()) {
                             if (UnixFile.isItASCII(e.getValue())) {
-                                top.appendA("EditAny?file=" + e.getValue().getAbsolutePath(), "_blank", e.getKey());
+                                top.appendA("EditAny?file=" + e.getValue().getAbsolutePath(), e.getKey());
                             } else {
                                 top.appendText(e.getKey());
                             }

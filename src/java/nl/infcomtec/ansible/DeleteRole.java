@@ -64,7 +64,7 @@ public class DeleteRole extends HttpServlet {
                             }
                         }
                     }
-                    top.appendP("All done, you can close this window/tab now.");
+                    top.appendA("index.jsp","All done, return me to the main page.");
                     doc.write(out);
                     return;
                 }
@@ -110,7 +110,7 @@ public class DeleteRole extends HttpServlet {
                 top.pop();
                 top.appendP("It that what you intended?");
                 top.createInput("submit", fubar).setStyleElement("font-size", "larger");
-                top.appendP("(Else just close this window/tab).");
+                top.appendA("index.jsp","(Else just return to the main page here).");
                 doc.write(out);
             } catch (Exception ex) {
                 throw new ServletException(ex);

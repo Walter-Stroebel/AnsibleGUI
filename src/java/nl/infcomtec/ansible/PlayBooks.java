@@ -89,13 +89,13 @@ public class PlayBooks {
             frag.appendTD(e.values.toString());
             frag.push("td");
             for (File f : e.definedIn) {
-                frag.appendA("EditYml?file=" + f.getAbsolutePath(), "_blank", shortFileName(f));
+                frag.appendA("EditYml?file=" + f.getAbsolutePath(), shortFileName(f));
                 frag.createElement("br");
             }
             frag.pop();
             frag.push("td");
             for (File f : e.usedBy) {
-                frag.appendA("EditYml?file=" + f.getAbsolutePath(), "_blank", shortFileName(f));
+                frag.appendA("EditYml?file=" + f.getAbsolutePath(), shortFileName(f));
                 frag.createElement("br");
             }
             frag.pop();
@@ -111,7 +111,7 @@ public class PlayBooks {
         for (Role e : roles.values()) {
             frag.push("tr");
             frag.push("td");
-            frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
+            frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "icons/delete.png");
             if (e.meta != null) {
                 e.meta.toHtml(frag);
             }
@@ -121,8 +121,8 @@ public class PlayBooks {
                 if (!first) {
                     frag.createElement("br");
                 }
-                frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), "_blank", e2.name);
-                frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "_blank", "icons/delete.png");
+                frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), e2.name);
+                frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
                 first = false;
             }
             frag.pop();
@@ -137,7 +137,7 @@ public class PlayBooks {
         frag.pop();
         frag.push("tr");
         frag.push("td");
-        frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "_blank", "icons/delete.png");
+        frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "icons/delete.png");
         if (e.meta != null) {
             e.meta.toHtml(frag);
         }
@@ -152,8 +152,8 @@ public class PlayBooks {
                 frag.createCheckBox(parSelectedTasks, selName);
                 frag.appendText(" ");
             }
-            frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), "_blank", e2.name);
-            frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "_blank", "icons/delete.png");
+            frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), e2.name);
+            frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
             first = false;
         }
         frag.pop();
@@ -506,7 +506,7 @@ public class PlayBooks {
             if (f.isDirectory()) {
                 top.createElement("tr").appendTD(f.getAbsolutePath() + " (dir)");
             } else {
-                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), "_blank", shortFileName(f));
+                top.createElement("tr").createElement("td").appendA("EditAny?file=" + f.getAbsolutePath(), shortFileName(f));
             }
         }
         top.pop();

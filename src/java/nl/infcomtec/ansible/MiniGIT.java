@@ -39,7 +39,6 @@ public class MiniGIT extends HttpServlet {
         String ansPath = (String) request.getSession().getAttribute("anspath");
         response.setContentType("text/html;charset=UTF-8");
         try (PrintWriter out = response.getWriter()) {
-            /* TODO output your page here. You may use following sample code. */
             out.println("<!DOCTYPE html>");
             try {
                 JHParameter pull = new JHParameter(request, "pull", "Pull");
@@ -69,6 +68,8 @@ public class MiniGIT extends HttpServlet {
                 html.appendP("Enter a comment here if you are going to commit:");
                 html.createElement("textarea").appendAttr("rows", "24").appendAttr("cols", "80").appendAttr("name", "ctext");
                 html.createInput("submit", commit);
+                html.createElement("hr");
+                html.appendA("index.jsp", "All done, return to editor");
                 html.createElement("hr");
                 if (pull.wasSet) {
                     html.push("pre");

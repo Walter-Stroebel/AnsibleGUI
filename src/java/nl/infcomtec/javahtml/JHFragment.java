@@ -317,4 +317,19 @@ public class JHFragment {
         return ret;
     }
 
+    /**
+     * Shorthand for
+     * createElement("A").appendAttribute(href).appendAttribute(target).appendIMG(url)
+     *
+     * @param href See HTML A element.
+     * @param url the source for the IMG element.
+     * @return The A child element for chaining attribute/style calls.
+     */
+    public JHFragment appendAImg(String href, String url) {
+        JHFragment ret = createElement("A").appendAttr("href", href).appendIMG(url);
+        ret.removeStyleElement("color");
+        ret.appendAttr("class", "anchor");
+        return ret;
+    }
+
 }
