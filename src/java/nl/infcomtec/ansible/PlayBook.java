@@ -82,8 +82,7 @@ public class PlayBook {
                 }
             }
             if (!map.isEmpty()) {
-                System.err.println(map);
-                // throw new YamlException("Unknown elements found in playbook");
+                System.err.println("Unknown elements found in playbook "+f+" "+map);
             }
         }
     }

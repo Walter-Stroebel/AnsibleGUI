@@ -170,7 +170,7 @@ public class PlayBooks {
         randomFiles.clear();
         roles.clear();
         //vars.clear();
-        System.out.println("" + directory);
+        //System.out.println("" + directory);
         for (File f : directory.listFiles()) {
             if (f.getName().startsWith(".")) {
                 continue;

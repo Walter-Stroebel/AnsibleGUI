@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -85,7 +86,7 @@ public class Inventory extends HttpServlet {
                         printHost(top, h, books);
                     }
                     top.pop("dl");
-                } else {
+                } else if (pHost.notEmpty()){
                     TreeSet<String> groups = books.inv.hosts.get(pHost.getValue());
                     top.push("dl");
                     top.createElement("dt").appendText(pHost.getValue());
