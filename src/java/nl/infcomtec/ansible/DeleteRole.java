@@ -4,8 +4,6 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlConfig;
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
@@ -55,7 +53,7 @@ public class DeleteRole extends HttpServlet {
                     deleteAll(roleDir);
                     for (File f : books.directory.listFiles()) {
                         if (!f.isDirectory() && f.getName().endsWith(".yml")) {
-                            AnsObject pb = new AnsObject(null, f, new FileReader(f));
+                            AnsObject pb = new AnsObject(null, f);
                             if (pb.removeElement(name.getValue())) {
                                 String ymlOut = pb.makeString();                                
                                 try (PrintWriter pw = new PrintWriter(f)) {

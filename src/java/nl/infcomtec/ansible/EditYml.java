@@ -4,9 +4,7 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlException;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
@@ -42,8 +40,8 @@ public class EditYml extends HttpServlet {
         File f = new File(fnam);
         AnsObject o;
         try {
-            o = new AnsObject(null, f, new FileReader(f));
-        } catch (YamlException ex) {
+            o = new AnsObject(null, f);
+        } catch (IOException ex) {
             // not YAML, send to general editor to fix
             response.sendRedirect("EditAny?warn=true&file=" + fnam);
             return;
@@ -54,9 +52,9 @@ public class EditYml extends HttpServlet {
             }
             // and reload the file!
             try {
-                o = new AnsObject(null, f, new FileReader(f));
+                o = new AnsObject(null, f);
                 response.sendRedirect("index.jsp");
-            } catch (YamlException ex) {
+            } catch (IOException ex) {
                 // not YAML (anymore), send to general editor to fix
                 response.sendRedirect("EditAny?warn=true&file=" + fnam);
                 return;
@@ -82,7 +80,7 @@ public class EditYml extends HttpServlet {
             out.println("<p>This does not look right; <input type=\"submit\" name=\"oops\" value=\"Open in text editor instead\" /></p>");
             out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
             String toHtml = "";
-            if (o != null && o.object != null) {
+            if (o != null) {
                 toHtml=o.makeString();
             }
             out.println(JHFragment.html(toHtml));

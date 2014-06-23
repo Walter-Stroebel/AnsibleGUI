@@ -4,7 +4,6 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -45,7 +44,7 @@ public class DeleteTask extends HttpServlet {
                 JHParameter file = new JHParameter(request, "file");
                 File tFile = new File(file.getValue());
                 JHParameter task = new JHParameter(request, "task");
-                AnsObject tObj = new AnsObject(null, tFile, new FileReader(tFile));
+                AnsObject tObj = new AnsObject(null, tFile);
                 JHDocument doc = new JHDocument();
                 JHFragment top = new JHFragment(doc, "html");
                 top.push("head");
@@ -54,11 +53,10 @@ public class DeleteTask extends HttpServlet {
                 top.push("body");
                 if (fubar.wasSet) {
                     tObj.removeElement(task.getValue());
-                    YamlWriter writer = new YamlWriter(new FileWriter(tFile));
-                    writer.write(tObj.object);
-                    writer.close();
+                    FileWriter fw = new FileWriter(tFile);
+                    fw.write(tObj.makeString());
                     top.appendP("Done, this task file now contains:");
-                    tObj = new AnsObject(null, tFile, new FileReader(tFile));
+                    tObj = new AnsObject(null, tFile);
                     tObj.toHtml(top);
                     top.appendA("index.jsp","All done, return me to the main page.");
                     doc.write(out);

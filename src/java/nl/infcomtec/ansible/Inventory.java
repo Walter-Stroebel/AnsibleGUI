@@ -17,6 +17,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import nl.infcomtec.ansible.AnsObject.AnsString;
 import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;
@@ -70,14 +71,14 @@ public class Inventory extends HttpServlet {
                     TreeSet<String> hosts = books.inv.groups.get(pGroup.getValue());
                     top.push("dl");
                     top.createElement("dt").appendText(pGroup.getValue());
-                    TreeMap<String, String> gvars = books.inv.vars.get("g_" + pGroup.getValue());
+                    TreeMap<AnsString, AnsElement> gvars = books.inv.vars.get("g_" + pGroup.getValue());
                     top.push("dd");
                     if (gvars != null) {
-                        for (Map.Entry<String, String> e : gvars.entrySet()) {
+                        for (Map.Entry<AnsString, AnsElement> e : gvars.entrySet()) {
                             top.createElement("br");
-                            top.appendText(e.getKey());
+                            top.appendText(e.getKey().getString());
                             top.appendText("=");
-                            top.appendText(e.getValue());
+                            top.appendText(e.getValue().getString()!=null?e.getValue().getString():e.getValue().toString());
                         }
                     }
                     top.push("ul");
@@ -90,14 +91,14 @@ public class Inventory extends HttpServlet {
                     TreeSet<String> groups = books.inv.hosts.get(pHost.getValue());
                     top.push("dl");
                     top.createElement("dt").appendText(pHost.getValue());
-                    TreeMap<String, String> hvars = books.inv.vars.get("h_" + pHost.getValue());
+                    TreeMap<AnsString, AnsElement> hvars = books.inv.vars.get("h_" + pHost.getValue());
                     top.push("dd");
                     if (hvars != null) {
-                        for (Map.Entry<String, String> e : hvars.entrySet()) {
+                        for (Map.Entry<AnsString, AnsElement> e : hvars.entrySet()) {
                             top.createElement("br");
-                            top.appendText(e.getKey());
+                            top.appendText(e.getKey().getString());
                             top.appendText("=");
-                            top.appendText(e.getValue());
+                            top.appendText(e.getValue().getString()!=null?e.getValue().getString():e.getValue().toString());
                         }
                     }
                     top.push("ul");
@@ -120,10 +121,13 @@ public class Inventory extends HttpServlet {
     private void printHost(JHFragment top, String h, PlayBooks books) {
         top.appendText(h);
         top.push("ul");
-        TreeMap<String, String> hvars = books.inv.vars.get("h_" + h);
+        TreeMap<AnsString, AnsElement> hvars = books.inv.vars.get("h_" + h);
         if (hvars != null) {
-            for (Map.Entry<String, String> e : hvars.entrySet()) {
-                top.appendLI(e.getKey() + "=" + e.getValue());
+            for (Map.Entry<AnsString, AnsElement> e : hvars.entrySet()) {
+                StringBuilder li = new StringBuilder(e.getKey().getString());
+                li.append("=");
+                li.append(e.getValue().getString()!=null?e.getValue().getString():e.getValue().toString());
+                top.appendLI(li.toString());
             }
         }
         top.pop();
@@ -132,10 +136,13 @@ public class Inventory extends HttpServlet {
     private void printGroup(JHFragment top, String g, PlayBooks books) {
         top.appendText(g);
         top.push("ul");
-        TreeMap<String, String> gvars = books.inv.vars.get("g_" + g);
+        TreeMap<AnsString, AnsElement> gvars = books.inv.vars.get("g_" + g);
         if (gvars != null) {
-            for (Map.Entry<String, String> e : gvars.entrySet()) {
-                top.appendLI(e.getKey() + "=" + e.getValue());
+            for (Map.Entry<AnsString, AnsElement> e : gvars.entrySet()) {
+                StringBuilder li = new StringBuilder(e.getKey().getString());
+                li.append("=");
+                li.append(e.getValue().getString()!=null?e.getValue().getString():e.getValue().toString());
+                top.appendLI(li.toString());
             }
         }
         top.pop();

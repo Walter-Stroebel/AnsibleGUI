@@ -4,10 +4,9 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlException;
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
 import nl.infcomtec.javahtml.JHFragment;
@@ -27,62 +26,69 @@ public class PlayBook {
     public final ArrayList<String> includes = new ArrayList<>();
     public final PlayBooks owner;
 
-    public PlayBook(PlayBooks owner, File f, List<Map> list) throws YamlException {
+    public PlayBook(PlayBooks owner, File f, AnsObject.AnsList list) throws IOException {
         this.owner = owner;
         this.inFile = f;
-        for (Map map : list) {
-            {
-                String s = (String) map.remove("remote_user");
-                if (s != null) {
-                    remoteUser.add(s);
+        for (AnsElement elm : list) {
+            AnsObject.AnsMap map = elm.getMap();
+            if (map!=null){
+                AnsElement s = map.remove("remote_user");
+                if (s != null && s.getString() != null) {
+                    remoteUser.add(s.getString());
                 }
+            }else{
+                System.err.println("Why is 'remote_user' a "+elm+"?");
+                return;
             }
             {
-                List<?> rls = (List<?>) map.remove("roles");
+                AnsElement _rls = map.remove("roles");
+                AnsObject.AnsList rls = _rls != null ? _rls.getList() : null;
                 if (rls != null) {
                     ArrayList<String> l = new ArrayList<>();
-                    for (Object o : rls) {
-                        if (o instanceof String) {
-                            l.add(o.toString());
-                        } else if (o instanceof Map) {
-                            Map<Object, Object> rmap = (Map<Object, Object>) o;
-                            //System.out.println(rmap);
-                            String rname = (String) rmap.remove("role");
-                            l.add(rname);
-                            Role parRole = owner.roles.get(rname);
-                            if (parRole == null) {
-                                parRole = new Role(rname);
+                    for (AnsElement o : rls) {
+                        if (o.getString() != null) {
+                            l.add(o.getString());
+                        } else if (o.getMap() != null) {
+                            AnsObject.AnsMap rmap = o.getMap();
+                            AnsElement rname = rmap.remove("role");
+                            if (rname.getString() != null) {
+                                l.add(rname.getString());
+                                Role parRole = owner.roles.get(rname.getString());
+                                if (parRole == null) {
+                                    parRole = new Role(rname.getString());
+                                }
+                                AnsVariable.addOrUpdate(parRole.vars, f, rmap, null);
+                                owner.roles.put(rname.getString(), parRole);
                             }
-                            AnsVariable.addOrUpdate(parRole.vars, f, rmap, null);
-                            owner.roles.put(rname, parRole);
-                            //System.out.println(rmap);
-                        } else {
-                            throw new YamlException("If not a list nor a map; what is it?");
-                        }
+                        }// else ignore it, a list here?
                     }
                     roles.addAll(l);
                 }
             }
             {
-                ArrayList<String> a = (ArrayList<String>) map.remove("tasks");
-                if (a != null) {
-                    tasks.addAll(a);
+                AnsElement a = map.remove("tasks");
+                if (a != null && a.getList() != null) {
+                    for (AnsElement e : a.getList()) {
+                        if (e.getString() != null) {
+                            tasks.add(e.getString());
+                        }
+                    }
                 }
             }
             {
-                String s = (String) map.remove("hosts");
-                if (s != null) {
-                    hosts.add(s);
+                AnsElement e = map.remove("hosts");
+                if (e != null&&e.getString()!=null) {
+                    hosts.add(e.getString());
                 }
             }
             {
-                String s = (String) map.remove("include");
-                if (s != null) {
-                    includes.add(s);
+                AnsElement e = map.remove("include");
+                if (e != null&&e.getString()!=null) {
+                    includes.add(e.getString());
                 }
             }
             if (!map.isEmpty()) {
-                System.err.println("Unknown elements found in playbook "+f+" "+map);
+                System.err.println("Unknown elements found in playbook " + f + " " + map);
             }
         }
     }

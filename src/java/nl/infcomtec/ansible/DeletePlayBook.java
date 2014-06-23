@@ -4,10 +4,8 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.File;
 import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
 import javax.servlet.ServletException;
@@ -43,7 +41,7 @@ public class DeletePlayBook extends HttpServlet {
             JHParameter fubar = new JHParameter(request, "fubar", "Yes, make it so!");
             JHParameter file = new JHParameter(request, "file");
             File tFile = new File(file.getValue());
-            AnsObject tObj = new AnsObject(null, tFile, new FileReader(tFile));
+            AnsObject tObj = new AnsObject(null, tFile);
             JHDocument doc = new JHDocument();
             JHFragment top = new JHFragment(doc, "html");
             top.push("head");

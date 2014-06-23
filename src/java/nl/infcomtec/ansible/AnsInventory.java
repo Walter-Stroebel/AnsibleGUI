@@ -9,11 +9,11 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import nl.infcomtec.ansible.AnsObject.AnsString;
 
 /**
  *
@@ -21,11 +21,16 @@ import java.util.TreeSet;
  */
 public class AnsInventory {
 
-    public final TreeMap<String, TreeMap<String, String>> vars = new TreeMap<>();
+    public final TreeMap<String, TreeMap<AnsString, AnsElement>> vars = new TreeMap<>();
     public final TreeMap<String, TreeSet<String>> groups = new TreeMap<>();
     public final TreeMap<String, TreeSet<String>> hosts = new TreeMap<>();
     public final File file;
-
+/**
+ * Build the inventory.
+ * @param pbDir Playbook (master) directory.
+ * @param file Inventory file.
+ * @throws IOException If it does.
+ */
     public AnsInventory(File pbDir, File file) throws IOException {
         this.file = file;
         File groupVars = new File(pbDir, "group_vars");
@@ -47,22 +52,22 @@ public class AnsInventory {
                     if (s.contains(":vars")) {
                         group = s.substring(1, s.indexOf(':'));
                         File gf = new File(groupVars, group);
-                        Map<Object, Object> map = new HashMap();
+                        AnsObject.AnsMap map = new AnsObject.AnsMap();
                         if (gf.exists()) {
                             try {
-                                AnsObject ao = new AnsObject(null, gf, new FileReader(gf));
+                                AnsObject ao = new AnsObject(null, gf);
                                 if (ao.getMap() != null) {
                                     map.putAll(ao.getMap());
                                 }
                             } catch (Exception any) {
                             }
                         }
-                        TreeMap<String, String> gvars = vars.get("g_" + group);
+                        TreeMap<AnsString, AnsElement> gvars = vars.get("g_" + group);
                         if (gvars == null) {
                             gvars = new TreeMap<>();
                         }
-                        for (Map.Entry<Object, Object> e : map.entrySet()) {
-                            gvars.put(e.getKey().toString(), e.getValue().toString());
+                        for ( Map.Entry<AnsObject.AnsString, AnsElement> e : map.entrySet()) {
+                            gvars.put(e.getKey(), e.getValue());
                         }
                         bfr.mark(1000);
                         for (_s = bfr.readLine(); _s != null; _s = bfr.readLine()) {
@@ -75,11 +80,11 @@ public class AnsInventory {
                             }
                             bfr.mark(1000);
                             String[] vd = s.split("=");
-                            gvars.put(vd[0], vd[1]);
+                            gvars.put(new AnsString(vd[0]), new AnsObject.AnsString(vd[1]));
                         }
                         bfr.reset();
                         map.clear();
-                        for (Map.Entry<String, String> e : gvars.entrySet()) {
+                        for (Map.Entry<AnsString, AnsElement> e : gvars.entrySet()) {
                             map.put(e.getKey(), e.getValue());
                         }
                         try (PrintWriter pw = new PrintWriter(gf)) {
@@ -108,27 +113,27 @@ public class AnsInventory {
                     l.add(group);
                     l.add("all");
                     File hf = new File(hostVars, host);
-                    Map<Object, Object> map = new HashMap();
+                    AnsObject.AnsMap map = new AnsObject.AnsMap();
                     if (hf.exists()) {
                         try {
-                            AnsObject ao = new AnsObject(null, hf, new FileReader(hf));
+                            AnsObject ao = new AnsObject(null, hf);
                             if (ao.getMap() != null) {
                                 map.putAll(ao.getMap());
                             }
                         } catch (Exception any) {
                         }
                     }
-                    TreeMap<String, String> hvars = vars.get("h_" + host);
+                    TreeMap<AnsString, AnsElement> hvars = vars.get("h_" + host);
                     if (hvars == null) {
                         hvars = new TreeMap<>();
                     }
-                    for (Map.Entry<Object, Object> e : map.entrySet()) {
-                        hvars.put(e.getKey().toString(), e.getValue().toString());
+                    for (Map.Entry<AnsObject.AnsString, AnsElement> e : map.entrySet()) {
+                        hvars.put(e.getKey(), e.getValue());
                     }
                     if (toker.hasMoreTokens()) {
                         String tok = toker.nextToken();
                         if (tok.equals(":") && toker.hasMoreTokens()) {
-                            hvars.put("ansible_ssh_port", toker.nextToken());
+                            hvars.put(new AnsString("ansible_ssh_port"), new AnsObject.AnsString(toker.nextToken()));
                             if (toker.hasMoreTokens()) {
                                 tok = toker.nextToken();
                             } else {
@@ -140,7 +145,7 @@ public class AnsInventory {
                             if (!tok.isEmpty()) {
                                 String[] vd = tok.split("=");
                                 if (vd.length == 2) {
-                                    hvars.put(vd[0], vd[1]);
+                                    hvars.put(new AnsString(vd[0]), new AnsObject.AnsString(vd[1]));
                                 } else {
                                     break;
                                 }
@@ -152,7 +157,7 @@ public class AnsInventory {
                             }
                         } while (!tok.isEmpty() || toker.hasMoreTokens());
                         map.clear();
-                        for (Map.Entry<String, String> e : hvars.entrySet()) {
+                        for (Map.Entry<AnsString, AnsElement> e : hvars.entrySet()) {
                             map.put(e.getKey(), e.getValue());
                         }
                         try (PrintWriter pw = new PrintWriter(hf)) {

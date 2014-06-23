@@ -4,7 +4,6 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlException;
 import static org.testng.Assert.*;
 import org.testng.annotations.Test;
 
@@ -31,11 +30,11 @@ public class AnsObjectNGTest {
     }
 
     @Test
-    public void testSomeMethod() throws YamlException {
+    public void testSomeMethod() throws Exception {
         AnsObject ao = new AnsObject(null, null, testYAML);
         System.out.println(ao.makeString());
-        assertEquals(ao.getMap().get("address").toString(), "4011 16th Ave S");
-        System.out.println(ao.getMap().get("phone numbers"));
+        assertEquals(ao.getMap().get(new AnsObject.AnsString("address")).getString(), "4011 16th Ave S");
+        System.out.println(ao.getMap().get(new AnsObject.AnsString("phone numbers")));
     }
 
 }

@@ -5,7 +5,6 @@
 package nl.infcomtec.ansible;
 
 import java.io.File;
-import java.util.Map;
 
 /**
  *
@@ -14,9 +13,9 @@ import java.util.Map;
 public class Task {
 public final String name;
     public final File file;
-    public final Map map;
+    public final AnsObject.AnsMap map;
 
-    public Task(String name, File aTask, Map t) {
+    public Task(String name, File aTask, AnsObject.AnsMap t) {
         this.name=name;
         this.file = aTask;
         this.map = t;

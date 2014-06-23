@@ -4,25 +4,21 @@
  */
 package nl.infcomtec.ansible;
 
-import com.esotericsoftware.yamlbeans.YamlException;
-import com.esotericsoftware.yamlbeans.YamlWriter;
 import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
+import java.io.IOException;
 import java.io.PrintWriter;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspWriter;
+import nl.infcomtec.ansible.AnsObject.AnsString;
 import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;
@@ -54,7 +50,7 @@ public class PlayBooks {
     private JHParameter parSubmitMergeRole;
     public AnsInventory inv;
 
-    public PlayBooks(File directory) throws YamlException, FileNotFoundException {
+    public PlayBooks(File directory) throws IOException {
         if (directory == null) {
             throw new RuntimeException("Huh?");
         }
@@ -90,7 +86,20 @@ public class PlayBooks {
             }
             frag.push("tr");
             frag.appendTD(e.name);
-            frag.appendTD(e.values.toString());
+            frag.push("td");
+            boolean first = true;
+            for (AnsElement ve : e.values) {
+                if (!first) {
+                    frag.createElement("br");
+                }
+                first = false;
+                if (ve.getString() != null) {
+                    frag.appendText(ve.getString());
+                } else {
+                    frag.appendText(ve.toString());
+                }
+            }
+            frag.pop();
             frag.push("td");
             for (File f : e.definedIn) {
                 frag.appendA("EditYml?file=" + f.getAbsolutePath(), shortFileName(f));
@@ -164,7 +173,7 @@ public class PlayBooks {
         frag.pop();
     }
 
-    public void scan() throws YamlException, FileNotFoundException {
+    public void scan() throws IOException {
         // reset all data in case some form action left some junk there
         playBooks.clear();
         randomFiles.clear();
@@ -196,8 +205,8 @@ public class PlayBooks {
                             randomFiles.add(hv);
                         }
                         try {
-                            AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                            TreeMap<String, String> hvars = inv.vars.get("h_" + hv.getName());
+                            AnsObject ao = new AnsObject(this, hv);
+                            TreeMap<AnsString, AnsElement> hvars = inv.vars.get("h_" + hv.getName());
                             if (hvars == null) {
                                 hvars = new TreeMap<>();
                                 inv.vars.put("h_" + hv.getName(), hvars);
@@ -216,8 +225,8 @@ public class PlayBooks {
                             randomFiles.add(hv);
                         }
                         try {
-                            AnsObject ao = new AnsObject(this, hv, new FileReader(hv));
-                            TreeMap<String, String> gvars = inv.vars.get("g_" + hv.getName());
+                            AnsObject ao = new AnsObject(this, hv);
+                            TreeMap<AnsString, AnsElement> gvars = inv.vars.get("g_" + hv.getName());
                             if (gvars == null) {
                                 gvars = new TreeMap<>();
                                 inv.vars.put("g_" + hv.getName(), gvars);
@@ -238,15 +247,15 @@ public class PlayBooks {
             } else if (f.getName().endsWith(".yml")) {
                 AnsObject obj;
                 try {
-                    obj = new AnsObject(this, f, new FileReader(f));
-                    ArrayList<Map> list = (ArrayList<Map>) obj.object;
+                    obj = new AnsObject(this, f);
+                    AnsObject.AnsList list = obj.getList();
                     if (list == null) {
-                        list = new ArrayList<>();
+                        list = new AnsObject.AnsList();
                     }
                     PlayBook pb = new PlayBook(this, f, list);
                     playBooks.put(f.getName().substring(0, f.getName().length() - 4), pb);
                 } catch (Exception any) {
-                    System.err.println("Bad playbook: " + f);
+                    any.printStackTrace();
                 }
             } else {
                 randomFiles.add(f);
@@ -254,7 +263,7 @@ public class PlayBooks {
         }
     }
 
-    private void roles(File roleDir) throws YamlException, FileNotFoundException {
+    private void roles(File roleDir) throws IOException {
         Role role = roles.get(roleDir.getName());
         if (role == null) {
             role = new Role(roleDir.getName());
@@ -265,7 +274,7 @@ public class PlayBooks {
         }
     }
 
-    private void readRoleFromDirectory(File rd, Role role) throws FileNotFoundException, YamlException {
+    private void readRoleFromDirectory(File rd, Role role) throws IOException {
         if (rd.getName().startsWith(".")) {
             return;
         }
@@ -291,16 +300,22 @@ public class PlayBooks {
                             continue;
                         }
                         if (aHandler.getName().endsWith(".yml")) {
-                            AnsObject hand = new AnsObject(this, aHandler, new FileReader(aHandler));
-                            List<Map> hands;
-                            if (hand.object instanceof Map) {
-                                hands = new ArrayList<>();
-                                hands.add((Map) hand.object);
+                            AnsObject hand = new AnsObject(this, aHandler);
+                            AnsObject.AnsList hands;
+                            if (hand.getMap() != null) {
+                                hands = new AnsObject.AnsList();
+                                hands.add(hand.getMap());
                             } else {
-                                hands = (List<Map>) hand.object;
+                                hands = hand.getList();
                             }
-                            for (Map t : hands) {
-                                role.handlers.put((String) t.get("name"), new RoleFileMap(aHandler, t));
+                            for (AnsElement t : hands) {
+                                if (t.getMap() != null) {
+                                    AnsObject.AnsMap map = t.getMap();
+                                    AnsElement name = map.get("name");
+                                    if (name != null) {
+                                        role.handlers.put(name.getString(), new RoleFileMap(aHandler, map));
+                                    }
+                                }
                             }
                         } else {
                             randomFiles.add(aHandler);
@@ -343,7 +358,7 @@ public class PlayBooks {
                         }
                         if (aFile.getName().endsWith(".yml")) {
                             try {
-                                role.meta = new AnsObject(this, aFile, new FileReader(aFile));
+                                role.meta = new AnsObject(this, aFile);
                             } catch (Exception ex) {
                                 randomFiles.add(aFile);
                             }
@@ -361,14 +376,14 @@ public class PlayBooks {
         }
     }
 
-    private void readRoleVarsAndDefaults(File rd, Role role) throws YamlException, FileNotFoundException {
+    private void readRoleVarsAndDefaults(File rd, Role role) throws IOException {
         for (File ts : rd.listFiles()) {
             if (ts.getName().startsWith(".")) {
                 continue;
             }
             if (ts.getName().endsWith(".yml")) {
                 try {
-                    AnsObject var = new AnsObject(this, ts, new FileReader(ts));
+                    AnsObject var = new AnsObject(this, ts);
                     AnsVariable.addOrUpdate(vars, rd, var.getMap(), null);
                 } catch (Exception any) {
                     randomFiles.add(ts);
@@ -379,28 +394,29 @@ public class PlayBooks {
         }
     }
 
-    private void readTasks(File aTask, Role role, TreeSet<File> all) throws FileNotFoundException, YamlException {
+    private void readTasks(File aTask, Role role, TreeSet<File> all) throws IOException {
         if (all != null) {
             all.remove(aTask);
         }
         if (aTask.getName().endsWith(".yml")) {
             try {
-                AnsObject task = new AnsObject(this, aTask, new FileReader(aTask));
-                List<Map> tasks = (List<Map>) task.object;
-                for (Map t : tasks) {
-                    String inc = (String) t.get("include");
+                AnsObject task = new AnsObject(this, aTask);
+                AnsObject.AnsList tasks = task.getList();
+                for (AnsElement _t : tasks) {
+                    AnsObject.AnsMap t = _t.getMap();
+                    AnsElement inc = t.get("include");
                     if (inc != null) {
-                        File incF = new File(aTask.getParentFile(), inc);
+                        File incF = new File(aTask.getParentFile(), inc.getString());
                         readTasks(incF, role, all);
                     } else {
-                        String tnam = (String) t.get("name");
+                        AnsElement tnam = t.get("name");
                         if (tnam == null) {
-                            tnam = (String) t.get("when");
+                            tnam = t.get("when");
                         }
                         if (tnam == null) {
-                            tnam = "??? " + role.tasks.size();
+                            tnam = new AnsObject.AnsString("??? " + role.tasks.size());
                         }
-                        role.tasks.add(new Task(tnam, aTask, t));
+                        role.tasks.add(new Task(tnam.getString(), aTask, t));
                     }
                 }
             } catch (Exception ex) {
@@ -411,18 +427,15 @@ public class PlayBooks {
         }
     }
 
-    public void scanForVars(final File inFile, final Object object) {
-        if (object instanceof String) {
-            String s = (String) object;
-            scanStringForVars(s, inFile);
-        } else if (object instanceof List) {
-            List l = (List) object;
-            for (Object o : l) {
+    public void scanForVars(final File inFile, final AnsElement object) {
+        if (object.getString() != null) {
+            scanStringForVars(object.getString(), inFile);
+        } else if (object.getList() != null) {
+            for (AnsElement o : object.getList()) {
                 scanForVars(inFile, o);
             }
-        } else if (object instanceof Map) {
-            Map<Object, Object> m = AnsObject.getMap(object);
-            for (Map.Entry<Object, Object> e : m.entrySet()) {
+        } else {
+            for (Map.Entry<AnsObject.AnsString, AnsElement> e : object.getMap().entrySet()) {
                 scanForVars(inFile, e.getKey());
                 scanForVars(inFile, e.getValue());
             }
@@ -433,14 +446,21 @@ public class PlayBooks {
         int idx = s.indexOf("{{");
         while (idx >= 0) {
             int end = s.indexOf("}}", idx);
+            if (end <= idx){
+                System.out.println("****************************************************");
+                System.out.println(s);
+                System.out.println("****************************************************");
+            }
             String varName = s.substring(idx + 2, end).trim();
+            System.out.println(s);
+            System.out.println(varName);
             AnsVariable var = vars.get(varName);
             if (var == null) {
                 var = new AnsVariable(varName);
                 vars.put(varName, var);
             }
             var.usedBy.add(inFile);
-            idx = s.indexOf(s, end);
+            idx = s.indexOf("{{", end);
         }
     }
 
@@ -544,16 +564,14 @@ public class PlayBooks {
                     keepHandDir.mkdir();
                     File keepFile = new File(keepHandDir, "main.yml");
                     if (keepFile.exists()) {
-                        AnsObject keepObj = new AnsObject(null, keepFile, new FileReader(keepFile));
-                        ((List) keepObj.object).add(e.map);
+                        AnsObject keepObj = new AnsObject(null, keepFile);
+                        keepObj.getList().add(e.map);
                         try (PrintWriter pw = new PrintWriter(keepFile)) {
                             pw.print(keepObj.makeString());
                         }
                     } else {
                         try (PrintWriter pw = new PrintWriter(keepFile)) {
-                            ArrayList<Map> wl = new ArrayList<>();
-                            wl.add(e.map);
-                            pw.print(AnsObject.makeString(wl));
+                            pw.print(AnsObject.makeString(e.map));
                         }
                     }
                 }
@@ -564,7 +582,8 @@ public class PlayBooks {
                 for (File f : keepTaskDir.listFiles()) {
                     f.delete();
                 }
-                ArrayList<Map> tmp = new ArrayList<>();
+                AnsObject.AnsList tmp = new AnsObject.AnsList();
+                //ArrayList<Map> tmp = new ArrayList<>();
                 for (Task t : rKeep.tasks) {
                     tmp.add(t.map);
                 }
@@ -580,11 +599,11 @@ public class PlayBooks {
                 File keepVarsDir = new File(keepF, "vars");
                 for (AnsVariable e : rMerge.vars.values()) {
                     for (File f : e.definedIn) {
-                        AnsObject mergeObj = new AnsObject(null, f, new FileReader(f));
+                        AnsObject mergeObj = new AnsObject(null, f);
                         keepVarsDir.mkdir();
                         File keepFile = new File(keepVarsDir, f.getName());
                         if (keepFile.exists()) {
-                            AnsObject keepObj = new AnsObject(null, keepFile, new FileReader(keepFile));
+                            AnsObject keepObj = new AnsObject(null, keepFile);
                             keepObj.getMap().putAll(mergeObj.getMap());
                             try (PrintWriter pw = new PrintWriter(keepFile)) {
                                 pw.print(keepObj.makeString());
@@ -600,7 +619,7 @@ public class PlayBooks {
         }
     }
 
-    private void moveTasksToNewRole() throws FileNotFoundException, YamlException {
+    private void moveTasksToNewRole() throws IOException {
         Role rOld = new Role(parEditRole.getValue());
         Role rNew = new Role(parMoveTasksToNewRole.getValue());
         File rolesF = new File(directory, "roles");
@@ -630,7 +649,7 @@ public class PlayBooks {
             File tasksFN = new File(roleFN, "tasks");
             File newTaskF = new File(tasksFN, "main.yml");
             {
-                ArrayList<Map> tmp = new ArrayList<>();
+                AnsObject.AnsList tmp = new AnsObject.AnsList();
                 for (Task t : rNew.tasks) {
                     tmp.add(t.map);
                 }
@@ -639,7 +658,7 @@ public class PlayBooks {
                 }
             }
             {
-                ArrayList<Map> tmp = new ArrayList<>();
+                AnsObject.AnsList tmp = new AnsObject.AnsList();
                 for (Task t : rOld.tasks) {
                     tmp.add(t.map);
                 }
@@ -665,16 +684,16 @@ public class PlayBooks {
             File newFile = new File(directory, newPB);
             if (!newFile.exists()) {
                 String newRole = parNewRole.getValue().trim().replace(' ', '_');
-                ArrayList<String> rolez = new ArrayList<>();
+                AnsObject.AnsList rolez = new AnsObject.AnsList();
                 if (parAddPlaybookRoles.values != null) {
                     for (String rz : parAddPlaybookRoles.values) {
                         if (!rz.trim().isEmpty()) {
-                            rolez.add(rz);
+                            rolez.add(new AnsObject.AnsString(rz));
                         }
                     }
                 }
                 if (!newRole.isEmpty()) {
-                    rolez.add(newRole);
+                    rolez.add(new AnsObject.AnsString(newRole));
                     File rdir = new File(directory, "roles/" + newRole + "/tasks");
                     rdir.mkdirs();
                     File dontOverwrite = new File(rdir, "main.yml");
@@ -686,14 +705,13 @@ public class PlayBooks {
                         }
                     }
                 }
-                FileWriter writer = new FileWriter(newFile);
-                YamlWriter yw = new YamlWriter(writer);
-                Map rm = new HashMap();
-                rm.put("roles", rolez);
-                ArrayList<Map> wl = new ArrayList<>();
-                wl.add(rm);
-                yw.write(wl);
-                yw.close();
+                try (FileWriter writer = new FileWriter(newFile)) {
+                    AnsObject.AnsMap rm = new AnsObject.AnsMap();
+                    rm.put(new AnsObject.AnsString("roles"), rolez);
+                    AnsObject.AnsList wl = new AnsObject.AnsList();
+                    wl.add(rm);
+                    writer.write(AnsObject.makeString(wl));
+                }
             }
             parNewPlayBook = parNewPlayBook.clear();
             parAddPlaybookRoles = parAddPlaybookRoles.clear();
@@ -832,7 +850,9 @@ public class PlayBooks {
     }
 
     public void writeEditInventory(final HttpServletRequest request, final JspWriter out) throws Exception {
-        if (inv == null) return;
+        if (inv == null) {
+            return;
+        }
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("float", "left");
@@ -841,19 +861,19 @@ public class PlayBooks {
         top.push("tr");
         top.createElement("th").appendAttr("colspan", "2").appendText("Edit/view the inventory.");
         top.pop();
-            for (Map.Entry<String, TreeSet<String>> e : inv.groups.entrySet()) {
-                top.push("tr");
-                top.createElement("th").appendAttr("rowspan", "" + e.getValue().size()).appendA("Inventory?group=" + e.getKey(), e.getKey());
-                boolean first = true;
-                for (String h : e.getValue()) {
-                    if (!first) {
-                        top.push("tr");
-                    }
-                    first = false;
-                    top.createElement("td").appendA("Inventory?host=" + h, h);
-                    top.pop("tr");
+        for (Map.Entry<String, TreeSet<String>> e : inv.groups.entrySet()) {
+            top.push("tr");
+            top.createElement("th").appendAttr("rowspan", "" + e.getValue().size()).appendA("Inventory?group=" + e.getKey(), e.getKey());
+            boolean first = true;
+            for (String h : e.getValue()) {
+                if (!first) {
+                    top.push("tr");
                 }
+                first = false;
+                top.createElement("td").appendA("Inventory?host=" + h, h);
+                top.pop("tr");
             }
+        }
         doc.write(out);
     }
 }
