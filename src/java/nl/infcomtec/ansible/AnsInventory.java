@@ -13,7 +13,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import nl.infcomtec.ansible.AnsObject.AnsString;
+import nl.infcomtec.ansible.AnsString;
 
 /**
  *
@@ -52,7 +52,7 @@ public class AnsInventory {
                     if (s.contains(":vars")) {
                         group = s.substring(1, s.indexOf(':'));
                         File gf = new File(groupVars, group);
-                        AnsObject.AnsMap map = new AnsObject.AnsMap();
+                        AnsMap map = new AnsMap();
                         if (gf.exists()) {
                             try {
                                 AnsObject ao = new AnsObject(null, gf);
@@ -66,7 +66,7 @@ public class AnsInventory {
                         if (gvars == null) {
                             gvars = new TreeMap<>();
                         }
-                        for ( Map.Entry<AnsObject.AnsString, AnsElement> e : map.entrySet()) {
+                        for ( Map.Entry<AnsString, AnsElement> e : map.entrySet()) {
                             gvars.put(e.getKey(), e.getValue());
                         }
                         bfr.mark(1000);
@@ -80,7 +80,7 @@ public class AnsInventory {
                             }
                             bfr.mark(1000);
                             String[] vd = s.split("=");
-                            gvars.put(new AnsString(vd[0]), new AnsObject.AnsString(vd[1]));
+                            gvars.put(new AnsString(vd[0]), new AnsString(vd[1]));
                         }
                         bfr.reset();
                         map.clear();
@@ -113,7 +113,7 @@ public class AnsInventory {
                     l.add(group);
                     l.add("all");
                     File hf = new File(hostVars, host);
-                    AnsObject.AnsMap map = new AnsObject.AnsMap();
+                    AnsMap map = new AnsMap();
                     if (hf.exists()) {
                         try {
                             AnsObject ao = new AnsObject(null, hf);
@@ -127,13 +127,13 @@ public class AnsInventory {
                     if (hvars == null) {
                         hvars = new TreeMap<>();
                     }
-                    for (Map.Entry<AnsObject.AnsString, AnsElement> e : map.entrySet()) {
+                    for (Map.Entry<AnsString, AnsElement> e : map.entrySet()) {
                         hvars.put(e.getKey(), e.getValue());
                     }
                     if (toker.hasMoreTokens()) {
                         String tok = toker.nextToken();
                         if (tok.equals(":") && toker.hasMoreTokens()) {
-                            hvars.put(new AnsString("ansible_ssh_port"), new AnsObject.AnsString(toker.nextToken()));
+                            hvars.put(new AnsString("ansible_ssh_port"), new AnsString(toker.nextToken()));
                             if (toker.hasMoreTokens()) {
                                 tok = toker.nextToken();
                             } else {
@@ -145,7 +145,7 @@ public class AnsInventory {
                             if (!tok.isEmpty()) {
                                 String[] vd = tok.split("=");
                                 if (vd.length == 2) {
-                                    hvars.put(new AnsString(vd[0]), new AnsObject.AnsString(vd[1]));
+                                    hvars.put(new AnsString(vd[0]), new AnsString(vd[1]));
                                 } else {
                                     break;
                                 }

@@ -5,16 +5,22 @@
 
 package nl.infcomtec.ansible;
 
+import java.util.ArrayList;
+
 /**
  *
  * @author walter
  */
-public class AnsDocument implements AnsElement {
-    public AnsElement root = null;
+public class AnsList extends ArrayList<AnsElement> implements AnsElement {
 
     @Override
     public String toString() {
-        return "AnsDocument{" + "root=" + root + '}';
+        StringBuilder ret = new StringBuilder("\nAnsList{");
+        for (AnsElement e : this) {
+            ret.append(", ");
+            ret.append(e);
+        }
+        return ret.append("}").toString();
     }
 
     @Override
@@ -24,12 +30,12 @@ public class AnsDocument implements AnsElement {
 
     @Override
     public AnsList getList() {
-        return root.getList();
+        return this;
     }
 
     @Override
     public AnsMap getMap() {
-        return root.getMap();
+        return null;
     }
     
 }

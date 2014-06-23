@@ -8,7 +8,6 @@ import java.io.File;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import nl.infcomtec.ansible.AnsObject.AnsString;
 
 /**
  *
@@ -35,15 +34,15 @@ public class AnsVariable {
         definedIn.add(definer);
     }
 
-    public static void addOrUpdate(TreeMap<String, AnsVariable> vars, File hv, AnsObject.AnsMap entries, TreeMap<AnsString, AnsElement> hvars) {
-        for ( Map.Entry<AnsObject.AnsString, AnsElement> e : entries.entrySet()) {
-            if (e.getValue().getMap()!=null) {
-                for ( Map.Entry<AnsObject.AnsString, AnsElement> e2 : e.getValue().getMap().entrySet()) {
+    public static void addOrUpdate(TreeMap<String, AnsVariable> vars, File hv, AnsMap entries, TreeMap<AnsString, AnsElement> hvars) {
+        for (Map.Entry<AnsString,AnsElement> e : entries.entrySet()) {
+            if (e.getValue().getMap() != null) {
+                for (Map.Entry<AnsString, AnsElement> e2 : e.getValue().getMap().entrySet()) {
                     String vNam = e.getKey().getString() + "." + e2.getKey().getString();
                     AnsElement vVal = e2.getValue();
                     addOrUpdateVar(vars, vNam, hv, vVal, hvars);
                 }
-            } else if (e.getValue().getList()!=null) {
+            } else if (e.getValue().getList() != null) {
                 for (AnsElement e2 : e.getValue().getList()) {
                     addOrUpdate(vars, hv, e2.getMap(), hvars);
                 }

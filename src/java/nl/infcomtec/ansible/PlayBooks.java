@@ -18,7 +18,7 @@ import java.util.TreeMap;
 import java.util.TreeSet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspWriter;
-import nl.infcomtec.ansible.AnsObject.AnsString;
+import nl.infcomtec.ansible.AnsString;
 import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;
@@ -248,9 +248,9 @@ public class PlayBooks {
                 AnsObject obj;
                 try {
                     obj = new AnsObject(this, f);
-                    AnsObject.AnsList list = obj.getList();
+                    AnsList list = obj.getList();
                     if (list == null) {
-                        list = new AnsObject.AnsList();
+                        list = new AnsList();
                     }
                     PlayBook pb = new PlayBook(this, f, list);
                     playBooks.put(f.getName().substring(0, f.getName().length() - 4), pb);
@@ -301,16 +301,16 @@ public class PlayBooks {
                         }
                         if (aHandler.getName().endsWith(".yml")) {
                             AnsObject hand = new AnsObject(this, aHandler);
-                            AnsObject.AnsList hands;
+                            AnsList hands;
                             if (hand.getMap() != null) {
-                                hands = new AnsObject.AnsList();
+                                hands = new AnsList();
                                 hands.add(hand.getMap());
                             } else {
                                 hands = hand.getList();
                             }
                             for (AnsElement t : hands) {
                                 if (t.getMap() != null) {
-                                    AnsObject.AnsMap map = t.getMap();
+                                    AnsMap map = t.getMap();
                                     AnsElement name = map.get("name");
                                     if (name != null) {
                                         role.handlers.put(name.getString(), new RoleFileMap(aHandler, map));
@@ -401,9 +401,9 @@ public class PlayBooks {
         if (aTask.getName().endsWith(".yml")) {
             try {
                 AnsObject task = new AnsObject(this, aTask);
-                AnsObject.AnsList tasks = task.getList();
+                AnsList tasks = task.getList();
                 for (AnsElement _t : tasks) {
-                    AnsObject.AnsMap t = _t.getMap();
+                    AnsMap t = _t.getMap();
                     AnsElement inc = t.get("include");
                     if (inc != null) {
                         File incF = new File(aTask.getParentFile(), inc.getString());
@@ -414,7 +414,7 @@ public class PlayBooks {
                             tnam = t.get("when");
                         }
                         if (tnam == null) {
-                            tnam = new AnsObject.AnsString("??? " + role.tasks.size());
+                            tnam = new AnsString("??? " + role.tasks.size());
                         }
                         role.tasks.add(new Task(tnam.getString(), aTask, t));
                     }
@@ -435,7 +435,7 @@ public class PlayBooks {
                 scanForVars(inFile, o);
             }
         } else {
-            for (Map.Entry<AnsObject.AnsString, AnsElement> e : object.getMap().entrySet()) {
+            for (Map.Entry<AnsString, AnsElement> e : object.getMap().entrySet()) {
                 scanForVars(inFile, e.getKey());
                 scanForVars(inFile, e.getValue());
             }
@@ -582,7 +582,7 @@ public class PlayBooks {
                 for (File f : keepTaskDir.listFiles()) {
                     f.delete();
                 }
-                AnsObject.AnsList tmp = new AnsObject.AnsList();
+                AnsList tmp = new AnsList();
                 //ArrayList<Map> tmp = new ArrayList<>();
                 for (Task t : rKeep.tasks) {
                     tmp.add(t.map);
@@ -649,7 +649,7 @@ public class PlayBooks {
             File tasksFN = new File(roleFN, "tasks");
             File newTaskF = new File(tasksFN, "main.yml");
             {
-                AnsObject.AnsList tmp = new AnsObject.AnsList();
+                AnsList tmp = new AnsList();
                 for (Task t : rNew.tasks) {
                     tmp.add(t.map);
                 }
@@ -658,7 +658,7 @@ public class PlayBooks {
                 }
             }
             {
-                AnsObject.AnsList tmp = new AnsObject.AnsList();
+                AnsList tmp = new AnsList();
                 for (Task t : rOld.tasks) {
                     tmp.add(t.map);
                 }
@@ -684,16 +684,16 @@ public class PlayBooks {
             File newFile = new File(directory, newPB);
             if (!newFile.exists()) {
                 String newRole = parNewRole.getValue().trim().replace(' ', '_');
-                AnsObject.AnsList rolez = new AnsObject.AnsList();
+                AnsList rolez = new AnsList();
                 if (parAddPlaybookRoles.values != null) {
                     for (String rz : parAddPlaybookRoles.values) {
                         if (!rz.trim().isEmpty()) {
-                            rolez.add(new AnsObject.AnsString(rz));
+                            rolez.add(new AnsString(rz));
                         }
                     }
                 }
                 if (!newRole.isEmpty()) {
-                    rolez.add(new AnsObject.AnsString(newRole));
+                    rolez.add(new AnsString(newRole));
                     File rdir = new File(directory, "roles/" + newRole + "/tasks");
                     rdir.mkdirs();
                     File dontOverwrite = new File(rdir, "main.yml");
@@ -706,9 +706,9 @@ public class PlayBooks {
                     }
                 }
                 try (FileWriter writer = new FileWriter(newFile)) {
-                    AnsObject.AnsMap rm = new AnsObject.AnsMap();
-                    rm.put(new AnsObject.AnsString("roles"), rolez);
-                    AnsObject.AnsList wl = new AnsObject.AnsList();
+                    AnsMap rm = new AnsMap();
+                    rm.put(new AnsString("roles"), rolez);
+                    AnsList wl = new AnsList();
                     wl.add(rm);
                     writer.write(AnsObject.makeString(wl));
                 }

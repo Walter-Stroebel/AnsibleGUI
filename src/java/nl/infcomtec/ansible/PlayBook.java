@@ -26,11 +26,11 @@ public class PlayBook {
     public final ArrayList<String> includes = new ArrayList<>();
     public final PlayBooks owner;
 
-    public PlayBook(PlayBooks owner, File f, AnsObject.AnsList list) throws IOException {
+    public PlayBook(PlayBooks owner, File f, AnsList list) throws IOException {
         this.owner = owner;
         this.inFile = f;
         for (AnsElement elm : list) {
-            AnsObject.AnsMap map = elm.getMap();
+            AnsMap map = elm.getMap();
             if (map!=null){
                 AnsElement s = map.remove("remote_user");
                 if (s != null && s.getString() != null) {
@@ -42,14 +42,14 @@ public class PlayBook {
             }
             {
                 AnsElement _rls = map.remove("roles");
-                AnsObject.AnsList rls = _rls != null ? _rls.getList() : null;
+                AnsList rls = _rls != null ? _rls.getList() : null;
                 if (rls != null) {
                     ArrayList<String> l = new ArrayList<>();
                     for (AnsElement o : rls) {
                         if (o.getString() != null) {
                             l.add(o.getString());
                         } else if (o.getMap() != null) {
-                            AnsObject.AnsMap rmap = o.getMap();
+                            AnsMap rmap = o.getMap();
                             AnsElement rname = rmap.remove("role");
                             if (rname.getString() != null) {
                                 l.add(rname.getString());

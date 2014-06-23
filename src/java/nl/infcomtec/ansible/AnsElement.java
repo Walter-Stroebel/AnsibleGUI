@@ -15,8 +15,8 @@ public interface AnsElement {
 
     public String getString();
 
-    public AnsObject.AnsList getList();
+    public AnsList getList();
 
-    public AnsObject.AnsMap getMap();
+    public AnsMap getMap();
     
 }

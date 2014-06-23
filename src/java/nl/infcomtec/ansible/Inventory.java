@@ -17,7 +17,7 @@ import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import nl.infcomtec.ansible.AnsObject.AnsString;
+import nl.infcomtec.ansible.AnsString;
 import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;

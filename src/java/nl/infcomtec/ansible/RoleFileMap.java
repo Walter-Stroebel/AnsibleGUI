@@ -13,9 +13,9 @@ import java.util.Map;
  */
 public class RoleFileMap {
     public final File file;
-    public final AnsObject.AnsMap map;
+    public final AnsMap map;
 
-    public RoleFileMap(File theFile, AnsObject.AnsMap theMap) {
+    public RoleFileMap(File theFile, AnsMap theMap) {
         this.file = theFile;
         this.map = theMap;
     }
