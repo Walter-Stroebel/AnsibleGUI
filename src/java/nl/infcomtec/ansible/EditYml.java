@@ -47,14 +47,14 @@ public class EditYml extends HttpServlet {
             return;
         }
         if (request.getParameter("save") != null) {
-            try (PrintWriter pw = new PrintWriter(new File(fnam))) {
+            try (PrintWriter pw = new PrintWriter(f)) {
                 pw.print(request.getParameter("edit"));
             }
             // and reload the file!
             try {
                 o = new AnsObject(null, f);
                 response.sendRedirect("index.jsp");
-            } catch (IOException ex) {
+            } catch (Exception ex) {
                 // not YAML (anymore), send to general editor to fix
                 response.sendRedirect("EditAny?warn=true&file=" + fnam);
                 return;
