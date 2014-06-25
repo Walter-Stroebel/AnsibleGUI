@@ -72,15 +72,19 @@ public class JHParameter {
                 setValues(defValue);
             }
         }
+        setInSession(session);
+    }
+
+    public final void setInSession(final HttpSession session){
         if (session != null) {
             if (values != null) {
                 session.setAttribute(SESPREFIX + varName, values);
             } else {
                 session.removeAttribute(SESPREFIX + varName);
             }
-        }
+        }        
     }
-
+    
     public static JHParameter overrideWasSet(JHParameter source, boolean wasSet) {
         return new JHParameter(source.varName, source.values, source.defValues, wasSet);
     }

@@ -427,6 +427,9 @@ public class PlayBooks {
         }
     }
 
+    /**
+     * Does not handle "with_items" yet.
+     */
     public void scanForVars(final File inFile, final AnsElement object) {
         if (object.getString() != null) {
             scanStringForVars(object.getString(), inFile);
@@ -446,14 +449,7 @@ public class PlayBooks {
         int idx = s.indexOf("{{");
         while (idx >= 0) {
             int end = s.indexOf("}}", idx);
-            if (end <= idx){
-                System.out.println("****************************************************");
-                System.out.println(s);
-                System.out.println("****************************************************");
-            }
             String varName = s.substring(idx + 2, end).trim();
-            System.out.println(s);
-            System.out.println(varName);
             AnsVariable var = vars.get(varName);
             if (var == null) {
                 var = new AnsVariable(varName);

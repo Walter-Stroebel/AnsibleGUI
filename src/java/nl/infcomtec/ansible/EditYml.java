@@ -13,6 +13,8 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import nl.infcomtec.javahtml.JHFragment;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
 /**
  *
@@ -39,12 +41,18 @@ public class EditYml extends HttpServlet {
         }
         File f = new File(fnam);
         AnsObject o;
-        try {
-            o = new AnsObject(null, f);
-        } catch (IOException ex) {
-            // not YAML, send to general editor to fix
-            response.sendRedirect("EditAny?warn=true&file=" + fnam);
-            return;
+        if (request.getParameter("edit") != null) {
+            o = new AnsObject(null, f, request.getParameter("edit"));
+        } else if (f.exists()) {
+            try {
+                o = new AnsObject(null, f);
+            } catch (IOException ex) {
+                // not YAML, send to general editor to fix
+                response.sendRedirect("EditAny?warn=true&file=" + fnam);
+                return;
+            }
+        } else {
+            o = new AnsObject(null, f, "{}");
         }
         if (request.getParameter("save") != null) {
             try (PrintWriter pw = new PrintWriter(f)) {
@@ -77,12 +85,22 @@ public class EditYml extends HttpServlet {
             out.println("<form action=\"EditYml\" method=\"POST\">");
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
             out.println("<h1>" + fnam + "</h1>");
-            out.println("<p>This does not look right; <input type=\"submit\" name=\"oops\" value=\"Open in text editor instead\" /></p>");
-            out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
-            String toHtml = "";
-            if (o != null) {
-                toHtml=o.makeString();
+            String toHtml;
+            if (request.getParameter("json") == null) {
+                out.println("<p><input type=\"submit\" name=\"json\" value=\"JSON mode\">");
+                toHtml = o.makeString();
+            } else {
+                out.println("<p><input type=\"submit\" name=\"notjson\" value=\"YAML mode\">");
+                Object tmp = YamlJson.yaml2Json(o.makeString());
+                if (tmp instanceof JSONObject)
+                    toHtml = ((JSONObject)tmp).toString(4);
+                else if (tmp instanceof JSONArray)
+                    toHtml = ((JSONArray)tmp).toString(4);
+                else
+                    toHtml=tmp.toString();
             }
+            out.println("This does not look right; <input type=\"submit\" name=\"oops\" value=\"Open in text editor instead\" /></p>");
+            out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
             out.println(JHFragment.html(toHtml));
             out.println("</textarea><br />");
             out.println("<input type=\"submit\" name=\"save\" value=\"Save\" />");

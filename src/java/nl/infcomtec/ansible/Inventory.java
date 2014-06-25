@@ -49,7 +49,6 @@ public class Inventory extends HttpServlet {
                 PlayBooks books = new PlayBooks(new File(ansPath));
                 books.inv = new AnsInventory(books.directory, new File(ansInv));
                 books.scan();
-                JHParameter fubar = new JHParameter(request, "fubar", "Yes, make it so!");
                 JHParameter pGroup = new JHParameter(request, "group");
                 JHParameter pHost = new JHParameter(request, "host");
                 JHDocument doc = new JHDocument();
@@ -58,11 +57,6 @@ public class Inventory extends HttpServlet {
                 top.createElement("title").appendText("Edit inventory");
                 top.pop();
                 top.push("body");//.setStyleElement("color", "darkgreen");
-                if (fubar.wasSet) {
-                    top.appendA("index.jsp", "All done, return me to the main page.");
-                    doc.write(out);
-                    return;
-                }
                 top.push("form");
                 top.appendAttr("action", "Inventory").appendAttr("method", "POST");
                 top.createInput("hidden", pGroup);
@@ -108,9 +102,7 @@ public class Inventory extends HttpServlet {
                     }
                     top.pop("dl");
                 }
-                top.appendP("It that what you intended?");
-                top.createInput("submit", fubar).setStyleElement("font-size", "larger");
-                top.appendA("index.jsp", "(Else just return to the main page here).");
+                top.appendA("index.jsp", "Return to the editor.");
                 doc.write(out);
             } catch (Exception ex) {
                 throw new ServletException(ex);

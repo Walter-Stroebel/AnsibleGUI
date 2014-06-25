@@ -4,8 +4,11 @@
  */
 package nl.infcomtec.ansible;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -31,13 +34,13 @@ public class PlayBook {
         this.inFile = f;
         for (AnsElement elm : list) {
             AnsMap map = elm.getMap();
-            if (map!=null){
+            if (map != null) {
                 AnsElement s = map.remove("remote_user");
                 if (s != null && s.getString() != null) {
                     remoteUser.add(s.getString());
                 }
-            }else{
-                System.err.println("Why is 'remote_user' a "+elm+"?");
+            } else {
+                System.err.println("Why is 'remote_user' a " + elm + "?");
                 return;
             }
             {
@@ -77,13 +80,13 @@ public class PlayBook {
             }
             {
                 AnsElement e = map.remove("hosts");
-                if (e != null&&e.getString()!=null) {
+                if (e != null && e.getString() != null) {
                     hosts.add(e.getString());
                 }
             }
             {
                 AnsElement e = map.remove("include");
-                if (e != null&&e.getString()!=null) {
+                if (e != null && e.getString() != null) {
                     includes.add(e.getString());
                 }
             }
@@ -93,16 +96,30 @@ public class PlayBook {
         }
     }
 
-    public void toHtml(HttpServletRequest request, JHFragment top) {
-        //System.out.println(request.getParameterMap());
+    public void toHtml(HttpServletRequest request, JHFragment top) throws IOException {
         JHParameter expandP = new JHParameter(request, "expand_" + inFile.getName(), "yes");
+        JHParameter expandPH = new JHParameter(request.getSession(), request, "expandh_" + inFile.getName(), "yes");
         JHParameter collAll = new JHParameter(request, "coll_all_play");
         JHParameter expnAll = new JHParameter(request, "expn_all_play");
         if (collAll.wasSet) {
             expandP = JHParameter.overrideWasSet(expandP, false);
+            expandPH.setValue(0);
+            expandPH.setInSession(request.getSession());
         }
         if (expnAll.wasSet) {
             expandP = JHParameter.overrideWasSet(expandP, true);
+            expandPH.setValue(1);
+            expandPH.setInSession(request.getSession());
+        }
+        if (!expandP.wasSet && expandPH.getIntValue() == 0) {
+            expandPH.setValue(0);
+            expandPH.setInSession(request.getSession());
+            top.createInput("hidden", expandPH);
+        } else {
+            expandPH.setValue(1);
+            expandPH.setInSession(request.getSession());
+            expandP = JHParameter.overrideWasSet(expandP, true);
+            top.createInput("hidden", expandPH);
         }
         top.createCheckBox(expandP).appendAttr("onChange", "this.form.submit()").appendAttr("id", expandP.varName);
         if (!expandP.wasSet) {
