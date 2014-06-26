@@ -22,6 +22,7 @@ public class Role {
     public final TreeMap<String, File> templates = new TreeMap<>();
     public final TreeMap<String, AnsVariable> vars = new TreeMap<>();
     public AnsObject meta;
+    public File descFile;
 
     public Role(String name) {
         this.name = name;

@@ -28,10 +28,14 @@ public class PlayBook {
     public final ArrayList<String> hosts = new ArrayList<>();
     public final ArrayList<String> includes = new ArrayList<>();
     public final PlayBooks owner;
+    private final String parName;
+    private final String desc;
 
     public PlayBook(PlayBooks owner, File f, AnsList list) throws IOException {
         this.owner = owner;
         this.inFile = f;
+        this.parName = "desc_" + owner.makeId(f);
+        this.desc = owner.getDoc(f, parName);
         for (AnsElement elm : list) {
             AnsMap map = elm.getMap();
             if (map != null) {
@@ -141,6 +145,14 @@ public class PlayBook {
         if (!expandP.wasSet) {
             top.createElement("hr");
         } else {
+            top.push("p");
+            JHFragment area = top.createElement("textarea");
+            area.appendAttr("name", parName).setStyleElement("background-color", "white");
+            area.appendAttr("rows", "10");
+            area.appendAttr("cols", "100");
+            area.appendText(desc);
+            top.createElement("input").appendAttr("type", "submit").appendAttr("value", "Update description").removeStyleElement("background-color");
+            top.pop();
             top.push("ul");
             if (!remoteUser.isEmpty()) {
                 top.push("li");

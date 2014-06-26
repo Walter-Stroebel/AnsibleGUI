@@ -2,7 +2,6 @@
  * Copyright (c) 2014 by Walter Stroebel and InfComTec.
  * All rights reserved.
  */
-
 package nl.infcomtec.ansible;
 
 import java.util.Map.Entry;
@@ -48,5 +47,19 @@ public class AnsMap extends TreeMap<AnsString, AnsElement> implements AnsElement
     public AnsElement remove(String key) {
         return remove(new AnsString(key));
     }
-    
+
+    @Override
+    public String getStringFor(String name) {
+        if (get(name) != null) {
+            return get(name).getString();
+        }
+        for (AnsElement e : values()) {
+            String ret = e.getStringFor(name);
+            if (ret != null) {
+                return ret;
+            }
+        }
+        return null;
+    }
+
 }

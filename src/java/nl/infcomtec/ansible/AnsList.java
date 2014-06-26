@@ -37,5 +37,14 @@ public class AnsList extends ArrayList<AnsElement> implements AnsElement {
     public AnsMap getMap() {
         return null;
     }
+
+    @Override
+    public String getStringFor(String name) {
+        for (AnsElement e : this) {
+            String ret = e.getStringFor(name);
+            if (ret!=null)return ret;
+        }
+        return null;
+    }
     
 }

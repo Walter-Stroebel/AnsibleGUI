@@ -140,6 +140,10 @@ public class AnsObject {
     private final AnsElement root;
     public final File inFile;
 
+    public String getStringFor(String name) {
+        return root.getStringFor(name);
+    }
+
     private static class SFile extends File {
 
         final long lastMod;

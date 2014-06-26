@@ -46,7 +46,7 @@ public class Inventory extends HttpServlet {
             try {
                 String ansPath = (String) request.getSession().getAttribute("anspath");
                 String ansInv = (String) request.getSession().getAttribute("ansinv");
-                PlayBooks books = new PlayBooks(new File(ansPath));
+                PlayBooks books = new PlayBooks(new File(ansPath),null,null);
                 books.inv = new AnsInventory(books.directory, new File(ansInv));
                 books.scan();
                 JHParameter pGroup = new JHParameter(request, "group");

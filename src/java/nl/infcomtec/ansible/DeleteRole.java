@@ -41,7 +41,7 @@ public class DeleteRole extends HttpServlet {
             try {
                 JHParameter fubar = new JHParameter(request, "fubar", "Yes, make it so!");
                 JHParameter name = new JHParameter(request, "name");
-                PlayBooks books = new PlayBooks(new File((String) request.getSession().getAttribute("anspath")));
+                PlayBooks books = new PlayBooks(new File((String) request.getSession().getAttribute("anspath")),null,null);
                 File roleDir = new File(new File(books.directory, "roles"), name.getValue());
                 JHDocument doc = new JHDocument();
                 JHFragment top = new JHFragment(doc, "html");

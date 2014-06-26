@@ -31,5 +31,10 @@ public class AnsDocument implements AnsElement {
     public AnsMap getMap() {
         return root.getMap();
     }
+
+    @Override
+    public String getStringFor(String name) {
+        return root.getStringFor(name);
+    }
     
 }

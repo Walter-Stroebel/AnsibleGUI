@@ -36,12 +36,12 @@
     } else {
         session.setAttribute("ansinv", ansInv);
     }
-    if (!ansInv.isEmpty()){
+    if (!ansInv.isEmpty()) {
         File make_abs = new File(ansInv);
-        if (!make_abs.exists()){
-            make_abs=new File(ansPath,ansInv);
-            if (make_abs.exists()){
-                ansInv=make_abs.getAbsolutePath();
+        if (!make_abs.exists()) {
+            make_abs = new File(ansPath, ansInv);
+            if (make_abs.exists()) {
+                ansInv = make_abs.getAbsolutePath();
                 session.setAttribute("ansinv", ansInv);
             } // else ah well, we tried.            
         } // else all is well, we hope.
@@ -84,29 +84,29 @@
             <%
                 if (!ansPath.isEmpty()) {
                     File test = new File(ansPath);
-                    if (!test.exists()||!test.isDirectory()) {
+                    if (!test.exists() || !test.isDirectory()) {
                         out.println("That is not a valid path.");
                         ansPath = "";
                     }
                 }
                 if (!ansPath.isEmpty()) {
-                    PlayBooks books = new PlayBooks(new File(ansPath));
-                    books.processNewPlayBookForm(request, out);
-                    books.processEditRoleForm(request, out);
-                    books.processEditInventory(request, out, ansInv);
+                    PlayBooks books = new PlayBooks(new File(ansPath), request, out);
+                    books.processNewPlayBookForm();
+                    books.processEditRoleForm();
+                    books.processEditInventory(ansInv);
                     books.scan();
-                    books.writeNewPlayBookForm(request, out);
-                    books.writeEditRoleForm(request, out);
-                    books.writeEditInventory(request, out);
+                    books.writeNewPlayBookForm();
+                    books.writeEditRoleForm();
+                    books.writeEditInventory();
             %>
             <div style="clear: both;" > </div>
             <input type="submit" name="coll_all_play" value="Collapse all playbooks" />
             <input type="submit" name="expn_all_play" value="Expand all playbooks" />
             <%
-                    books.writePlayBooks(request, out);
-                    books.writeRoles(request, out);
-                    books.writeVariables(request, out);
-                    books.writeRandomFiles(request, out);
+                    books.writePlayBooks();
+                    books.writeRoles();
+                    books.writeVariables();
+                    books.writeRandomFiles();
                 }
             %>        
         </form>

@@ -44,5 +44,10 @@ public class AnsString implements AnsElement, Comparable<AnsString> {
     public AnsMap getMap() {
         return null;
     }
+
+    @Override
+    public String getStringFor(String name) {
+        return null;
+    }
     
 }

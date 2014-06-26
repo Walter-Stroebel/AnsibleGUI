@@ -6,6 +6,7 @@ package nl.infcomtec.ansible;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -23,6 +24,9 @@ import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;
 import nl.infcomtec.javahtml.Select;
+import org.json.JSONArray;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 /**
  *
@@ -49,14 +53,36 @@ public class PlayBooks {
     private JHParameter parMergeRole;
     private JHParameter parSubmitMergeRole;
     public AnsInventory inv;
+    private final JSONArray doc;
+    private JSONArray docIn;
+    private final HttpServletRequest request;
+    private final JspWriter out;
 
-    public PlayBooks(File directory) throws IOException {
+    public PlayBooks(File directory, final HttpServletRequest request, final JspWriter out) throws IOException {
+        this.request = request;
+        this.out = out;
         if (directory == null) {
             throw new RuntimeException("Huh?");
         }
         this.directory = directory;
         dirPath = directory.getAbsolutePath();
         dirPathLen = dirPath.length() + 1;
+        File df = new File(directory, "doc.json");
+        if (df.exists()) {
+            try {
+                JSONTokener t = new JSONTokener(new FileInputStream(df));
+                docIn = new JSONArray(t);
+            } catch (Exception oops) {
+                // we tried
+                docIn = new JSONArray();
+            }
+            File bak = new File(directory, "doc.bak");
+            bak.delete();
+            df.renameTo(bak);
+        } else {
+            docIn = new JSONArray();
+        }
+        doc = new JSONArray();
     }
 
     /**
@@ -125,8 +151,29 @@ public class PlayBooks {
             frag.push("tr");
             frag.push("td");
             frag.appendText(e.name).appendAImg("DeleteRole?name=" + e.name, "icons/delete.png");
+            if (e.descFile != null) {
+                frag.createElement("br");
+                frag.appendA("EditAny?file=" + e.descFile.getAbsolutePath(), shortFileName(e.descFile));
+            }
             if (e.meta != null) {
-                e.meta.toHtml(frag);
+                frag.createElement("br");
+                frag.push("pre");
+                String desc = e.meta.getStringFor("description");
+                if (desc == null || desc.isEmpty()) {
+                    desc = "Please document me!";
+                }
+                String descTitle = desc.trim();
+                if (descTitle.length() > 20) {
+                    descTitle = descTitle.substring(0, 20);
+                    desc = desc.substring(20);
+                } else {
+                    desc = "";
+                }
+                frag.appendA("EditYml?file=" + e.meta.inFile.getAbsolutePath(), descTitle);
+                if (!desc.isEmpty()) {
+                    frag.appendText(desc);
+                }
+                frag.pop();
             }
             frag.push("td");
             boolean first = true;
@@ -143,7 +190,7 @@ public class PlayBooks {
         }
     }
 
-    public void editRolesTable(JHFragment frag, HttpServletRequest request, Role e) {
+    public void editRolesTable(JHFragment frag, Role e) {
         frag.push("tr");
         frag.appendTD("Role");
         frag.appendTD("Task(s)");
@@ -261,6 +308,12 @@ public class PlayBooks {
                 randomFiles.add(f);
             }
         }
+        {
+            File df = new File(directory, "doc.json");
+            try (PrintWriter pw = new PrintWriter(df)) {
+                pw.println(doc.toString(4));
+            }
+        }
     }
 
     private void roles(File roleDir) throws IOException {
@@ -271,6 +324,25 @@ public class PlayBooks {
         }
         for (File rd : roleDir.listFiles()) {
             readRoleFromDirectory(rd, role);
+        }
+        if (role.meta == null) {
+            File fCre = new File(roleDir, "meta");
+            fCre.mkdir();
+            fCre = new File(fCre, "main.yml");
+            try (PrintWriter pw = new PrintWriter(fCre)) {
+                pw.println("galaxy_info:");
+                pw.println("  min_ansible_version: 1.4");
+                pw.println("  platforms:");
+                pw.println("  - name: EL");
+                pw.println("    versions:");
+                pw.println("    - 6.5");
+                pw.println("  description: 'Please document me!'");
+            }
+            try {
+                role.meta = new AnsObject(this, fCre);
+            } catch (Exception ex) {
+                randomFiles.add(fCre);
+            }
         }
     }
 
@@ -371,6 +443,8 @@ public class PlayBooks {
                     randomFiles.add(rd);
                     break;
             }
+        } else if (rd.getName().toLowerCase().startsWith("readme")) {
+            role.descFile = rd;
         } else {
             randomFiles.add(rd);
         }
@@ -460,7 +534,7 @@ public class PlayBooks {
         }
     }
 
-    public void writePlayBooks(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writePlayBooks() throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("background-color", "lightyellow");
@@ -471,7 +545,7 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public void writeRoles(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeRoles() throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("background-color", "lightcyan");
@@ -483,7 +557,7 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public void writeVariables(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeVariables() throws Exception {
         JHParameter showUndef = new JHParameter(request, "showUndefVars", "yes");
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
@@ -498,7 +572,7 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public void writeRandomFiles(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeRandomFiles() throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("background-color", "lightsalmon");
@@ -516,7 +590,7 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public void processEditRoleForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void processEditRoleForm() throws Exception {
         parEditRole = new JHParameter(request, "editRole", "");
         parMoveTasksToNewRole = new JHParameter(request, "moveTasksToNewRole", "");
         parSubmitMoveTasksToNewRole = new JHParameter(request, "submitMoveTasksToNewRole", "Do it!");
@@ -667,7 +741,7 @@ public class PlayBooks {
         }
     }
 
-    public void processNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void processNewPlayBookForm() throws Exception {
         parNewPlayBook = new JHParameter(request, "newPlayBook", "");
         parAddPlaybookRoles = new JHParameter(request, "addPlaybookRoles", "");
         parNewRole = new JHParameter(request, "newRole", "");
@@ -730,7 +804,7 @@ public class PlayBooks {
         }
     }
 
-    public void writeNewPlayBookForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeNewPlayBookForm() throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("float", "left");
@@ -768,7 +842,7 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public void writeEditRoleForm(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeEditRoleForm() throws Exception {
         JHDocument doc = new JHDocument();
         JHFragment top = new JHFragment(doc, "div");
         top.setStyleElement("float", "left");
@@ -794,7 +868,7 @@ public class PlayBooks {
         top.pop("tr");
         if (parEditRole.notEmpty()) {
             Role r = roles.get(parEditRole.getValue());
-            editRolesTable(top, request, r);
+            editRolesTable(top, r);
             top.push("tr");
             top.appendTD("Move selected:");
             top.push("td");
@@ -838,14 +912,14 @@ public class PlayBooks {
         return ret.toString();
     }
 
-    public void processEditInventory(final HttpServletRequest request, final JspWriter out, String ansInv) throws Exception {
+    public void processEditInventory(String ansInv) throws Exception {
         File fi = new File(ansInv);
         if (fi.exists()) {
             this.inv = new AnsInventory(this.directory, fi);
         }
     }
 
-    public void writeEditInventory(final HttpServletRequest request, final JspWriter out) throws Exception {
+    public void writeEditInventory() throws Exception {
         if (inv == null) {
             return;
         }
@@ -871,5 +945,53 @@ public class PlayBooks {
             }
         }
         doc.write(out);
+    }
+
+    public String getDoc(File f, String requestParameter) {
+        String sf = shortFileName(f);
+        JSONObject o = null;
+        for (int i = 0; i < docIn.length(); i++) {
+            o = docIn.getJSONObject(i);
+            if (o.getString("file").equals(sf)) {
+                docIn.remove(i);
+                break;
+            }
+            o = null;
+        }
+        if (o == null) {
+            for (int i = 0; i < doc.length(); i++) {
+                o = doc.getJSONObject(i);
+                if (o.getString("file").equals(sf)) {
+                    break;
+                }
+                o = null;
+            }
+        } else {
+            doc.put(o);
+        }
+        String desc = o != null ? o.getString("desc") : "";
+        if (request != null) {
+            JHParameter pDesc = new JHParameter(request, requestParameter, desc);
+            desc = pDesc.getValue();
+        }
+        if (o == null) {
+            o = new JSONObject();
+            o.put("file", sf);
+            o.put("desc", desc);
+            doc.put(o);
+        } else {
+            o.put("desc", desc);
+        }
+        return o.getString("desc");
+    }
+
+    public String makeId(File f) {
+        StringBuilder ret = new StringBuilder(shortFileName(f));
+        for (int i = 0; i < ret.length(); i++) {
+            if (!Character.isJavaIdentifierStart(ret.charAt(i))) {
+                ret.replace(i, i + 1, "_");
+            }
+        }
+        return ret.toString();
     }
 }
