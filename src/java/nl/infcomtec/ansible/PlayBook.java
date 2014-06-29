@@ -4,11 +4,8 @@
  */
 package nl.infcomtec.ansible;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Map;
 import javax.servlet.http.HttpServletRequest;
@@ -25,8 +22,7 @@ public class PlayBook {
     public final File inFile;
     public final ArrayList<String> roles = new ArrayList<>();
     public final ArrayList<String> tasks = new ArrayList<>();
-    public final ArrayList<String> hosts = new ArrayList<>();
-    public final ArrayList<String> includes = new ArrayList<>();
+    public final AnsMap others=new AnsMap();
     public final PlayBooks owner;
     private final String parName;
     private final String desc;
@@ -82,21 +78,7 @@ public class PlayBook {
                     }
                 }
             }
-            {
-                AnsElement e = map.remove("hosts");
-                if (e != null && e.getString() != null) {
-                    hosts.add(e.getString());
-                }
-            }
-            {
-                AnsElement e = map.remove("include");
-                if (e != null && e.getString() != null) {
-                    includes.add(e.getString());
-                }
-            }
-            if (!map.isEmpty()) {
-                System.err.println("Unknown elements found in playbook " + f + " " + map);
-            }
+            others.putAll(map);
         }
     }
 
@@ -220,30 +202,11 @@ public class PlayBook {
                 top.pop();
                 top.pop();
             }
-            if (!hosts.isEmpty()) {
-                top.appendLI("Hosts = " + hosts);
-            }
-            if (!includes.isEmpty()) {
-                top.push("li");
-                top.appendText("Includes");
-                String sep = " = ";
-                for (String e : includes) {
-                    top.appendText(sep);
-                    sep = ", ";
-                    top.appendA("#" + e, e);
-                }
-                top.pop();
-            }
+            AnsObject.toHtml(top, others);
             if (!tasks.isEmpty()) {
                 top.appendLI("Tasks = " + tasks);
             }
             top.pop();
         }
     }
-
-    @Override
-    public String toString() {
-        return "PlayBook{" + "remoteUser=" + remoteUser + ", inFile=" + inFile + ", roles=" + roles + ", tasks=" + tasks + ", hosts=" + hosts + ", includes=" + includes + '}';
-    }
-
 }
