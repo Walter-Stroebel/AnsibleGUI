@@ -4,17 +4,15 @@
  */
 package nl.infcomtec.ansible;
 
+import com.esotericsoftware.yamlbeans.YamlReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TreeMap;
 import nl.infcomtec.javahtml.JHFragment;
-import org.json.JSONArray;
-import org.json.JSONObject;
 
 /**
  * Using JSON.
@@ -31,7 +29,7 @@ public class AnsObject {
         }
     }
 
-    private static void toHtml(JHFragment frag, Set<Map.Entry<AnsString,AnsElement>> set) {
+    private static void toHtml(JHFragment frag, Set<Map.Entry<AnsString, AnsElement>> set) {
         for (Entry<AnsString, AnsElement> e : set) {
             frag.push("li");
             frag.appendText(e.getKey().getString()).appendText(": ");
@@ -41,102 +39,101 @@ public class AnsObject {
     }
 
     public static void toHtml(JHFragment frag, AnsElement ae) {
-        if (ae.getMap()!=null) {
+        if (ae.getMap() != null) {
             frag.push("ul");
             toHtml(frag, ae.getMap().entrySet());
             frag.pop();
-        } else if (ae.getList()!=null) {
+        } else if (ae.getList() != null) {
             frag.push("ul");
             toHtml(frag, ae.getList());
             frag.pop();
-        } else if (ae.getString()!=null) {
+        } else if (ae.getString() != null) {
             frag.appendP(ae.getString());
         } else {
             throw new RuntimeException("What is this? " + ae.getClass().getName());
         }
     }
+//
+//    private static void blech(StringBuilder ret, int indent, AnsElement ae) {
+//        if (ae.getString()!=null) {
+//            StringBuilder q = new StringBuilder();
+//            boolean needQ = false;
+//            for (char c : ae.getString().toCharArray()) {
+//                if (c == '"') {
+//                    q.append("\\\"");
+//                    needQ = true;
+//                } else if (c == '{') {
+//                    q.append(c);
+//                    needQ = true;
+//                } else if (c == '\'') {
+//                    q.append(c);
+//                    needQ = true;
+//                } else if (c == '\\') {
+//                    q.append("\\\\");
+//                    needQ = true;
+//                } else if (c == '\n') {
+//                    q.append("\\n");
+//                    needQ = true;
+//                } else if (c == '\r') {
+//                    // double blech!
+//                    q.append("\\r");
+//                    needQ = true;
+//                } else if (c == '\t') {
+//                    // tripple blech!
+//                    q.append("\\t");
+//                    needQ = true;
+//                } else {
+//                    q.append(c);
+//                }
+//            }
+//            if (needQ) {
+//                q.insert(0, '"');
+//                q.append('"');
+//            }
+//            ret.append(q);
+//        } else if (ae.getList() != null) {
+//            AnsList l = ae.getList();
+//            for (int i = 0; i < l.size(); i++) {
+//                for (int j = 0; j < indent; j++) {
+//                    ret.append("  ");
+//                }
+//                ret.append("- ");
+//                blech(ret, indent + 1, l.get(i));
+//                if (indent == 0 && i < l.size() - 1) {
+//                    ret.append("\n\n");
+//                } else {
+//                    ret.append("\n");
+//                }
+//            }
+//        } else {
+//            Set<AnsString> names = ae.getMap().keySet();
+//            int i = 0;
+//            for (AnsString name:names) {
+//                if (i > 0) {
+//                    ret.append("\n");
+//                    for (int j = 0; j < indent; j++) {
+//                        ret.append("  ");
+//                    }
+//                }
+//                blech(ret, indent, name);
+//                AnsElement ae2 = ae.getMap().get(name);
+//                if (ae2.getString() != null) {
+//                    ret.append(": ");
+//                    blech(ret, indent, ae2);
+//                } else {
+//                    ret.append(":\n");
+//                    if (ae2.getMap() != null) {
+//                        for (int j = 0; j < indent + 1; j++) {
+//                            ret.append("  ");
+//                        }
+//                    }
+//                    blech(ret, indent + 1, ae2);
+//                }
+//                i++;
+//            }
+//        }
+//    }
 
-    private static void blech(StringBuilder ret, int indent, AnsElement ae) {
-        if (ae.getString()!=null) {
-            StringBuilder q = new StringBuilder();
-            boolean needQ = false;
-            for (char c : ae.getString().toCharArray()) {
-                if (c == '"') {
-                    q.append("\\\"");
-                    needQ = true;
-                } else if (c == '{') {
-                    q.append(c);
-                    needQ = true;
-                } else if (c == '\'') {
-                    q.append(c);
-                    needQ = true;
-                } else if (c == '\\') {
-                    q.append("\\\\");
-                    needQ = true;
-                } else if (c == '\n') {
-                    q.append("\\n");
-                    needQ = true;
-                } else if (c == '\r') {
-                    // double blech!
-                    q.append("\\r");
-                    needQ = true;
-                } else if (c == '\t') {
-                    // tripple blech!
-                    q.append("\\t");
-                    needQ = true;
-                } else {
-                    q.append(c);
-                }
-            }
-            if (needQ) {
-                q.insert(0, '"');
-                q.append('"');
-            }
-            ret.append(q);
-        } else if (ae.getList() != null) {
-            AnsList l = ae.getList();
-            for (int i = 0; i < l.size(); i++) {
-                for (int j = 0; j < indent; j++) {
-                    ret.append("  ");
-                }
-                ret.append("- ");
-                blech(ret, indent + 1, l.get(i));
-                if (indent == 0 && i < l.size() - 1) {
-                    ret.append("\n\n");
-                } else {
-                    ret.append("\n");
-                }
-            }
-        } else {
-            Set<AnsString> names = ae.getMap().keySet();
-            int i = 0;
-            for (AnsString name:names) {
-                if (i > 0) {
-                    ret.append("\n");
-                    for (int j = 0; j < indent; j++) {
-                        ret.append("  ");
-                    }
-                }
-                blech(ret, indent, name);
-                AnsElement ae2 = ae.getMap().get(name);
-                if (ae2.getString() != null) {
-                    ret.append(": ");
-                    blech(ret, indent, ae2);
-                } else {
-                    ret.append(":\n");
-                    if (ae2.getMap() != null) {
-                        for (int j = 0; j < indent + 1; j++) {
-                            ret.append("  ");
-                        }
-                    }
-                    blech(ret, indent + 1, ae2);
-                }
-                i++;
-            }
-        }
-    }
-
-    private final Object object;
     private final AnsElement root;
     public final File inFile;
 
@@ -153,37 +150,23 @@ public class AnsObject {
             lastMod = lastModified();
         }
     }
-    private static final TreeMap<SFile, AnsObject> cache = new TreeMap<>();
 
     public AnsObject(final PlayBooks books, final File inFile) throws IOException {
-        synchronized (cache) {
-            Entry<SFile, AnsObject> have = cache.ceilingEntry(new SFile(inFile));
-            if (have != null
-                    && have.getKey().getAbsolutePath().equals(inFile.getAbsolutePath())
-                    && have.getKey().lastMod == inFile.lastModified()) {
-                this.object = have.getValue().object;
-                this.inFile = have.getValue().inFile;
-                this.root = parse(this.object);
-            } else {
-                this.object = YamlJson.yaml2Json(inFile);
-                this.inFile = inFile;
-                this.root = parse(this.object);
-                cache.put(new SFile(inFile), this);
-            }
-        }
+        YamlReader reader = new YamlReader(new FileReader(inFile));
+        Object object = reader.read();
+        reader.close();
+        this.inFile = inFile;
+        this.root = parse(object);
         if (books != null) {
             books.scanForVars(inFile, root);
         }
     }
 
     public AnsObject(final PlayBooks books, final File inFile, final String yaml) throws IOException {
-        synchronized (cache) {
-            this.object = YamlJson.yaml2Json(yaml);
-            this.inFile = inFile;
-            // invalidated, if exists
-            cache.remove(new SFile(inFile));
-            root = parse(object);
-        }
+        YamlReader reader = new YamlReader(new FileReader(inFile));
+        Object object = reader.read();
+        this.inFile = inFile;
+        root = parse(object);
         if (books != null) {
             books.scanForVars(inFile, root);
         }
@@ -229,66 +212,64 @@ public class AnsObject {
     public void toHtml(JHFragment frag) {
         toHtml(frag, root);
     }
-
-    /**
-     * Serialize any object to YAML.
-     *
-     * @param obj The object to serialize.
-     * @return A String with the serialized object.
-     * @throws IOException If it does.
-     */
-    public static String makeString(AnsElement obj) throws IOException {
-        //return YamlJson.json2Yaml(toJSON(obj));
-        StringBuilder ret = new StringBuilder();
-        blech(ret, 0, obj);
-        return ret.toString();
-    }
-
-    /**
-     * Serialize this object to YAML.
-     *
-     * @return A String with the serialized object.
-     * @throws IOException If it does.
-     */
-    public String makeString() throws IOException {
-        return makeString(root);
-    }
+//
+//    /**
+//     * Serialize any object to YAML.
+//     *
+//     * @param obj The object to serialize.
+//     * @return A String with the serialized object.
+//     * @throws IOException If it does.
+//     */
+//    public static String makeString(AnsElement obj) throws IOException {
+//        //return YamlJson.json2Yaml(toJSON(obj));
+//        StringBuilder ret = new StringBuilder();
+//        blech(ret, 0, obj);
+//        return ret.toString();
+//    }
+//
+//    /**
+//     * Serialize this object to YAML.
+//     *
+//     * @return A String with the serialized object.
+//     * @throws IOException If it does.
+//     */
+//    public String makeString() throws IOException {
+//        return makeString(root);
+//    }
 
     private AnsElement parse(Object _obj) {
-        if (_obj instanceof JSONObject) {
-            JSONObject obj = (JSONObject) _obj;
+        if (_obj instanceof Map) {
+            Map<Object,Object> obj = (Map<Object,Object>) _obj;
             AnsMap ret = new AnsMap();
-            for (Iterator it = obj.keys(); it.hasNext();) {
-                String key = (String) it.next();
-                ret.put(new AnsString(key), parse(obj.get(key)));
+            for (Map.Entry<Object,Object> e: obj.entrySet()){
+                ret.put(new AnsString(e.getKey().toString()), parse(e.getValue()));
             }
             return ret;
-        } else if (_obj instanceof JSONArray) {
-            JSONArray arr = (JSONArray) _obj;
+        } else if (_obj instanceof List) {
             AnsList ret = new AnsList();
-            for (int i = 0; i < arr.length(); i++) {
-                ret.add(parse(arr.get(i)));
+            for (Object o : ((List)_obj)) {
+                ret.add(parse(o));
             }
             return ret;
         } else {
             return new AnsString(_obj.toString());
         }
     }
-
-    private static Object toJSON(AnsElement elm) {
-        if (elm.getList() != null) {
-            JSONArray ret = new JSONArray();
-            for (AnsElement e : elm.getList()) {
-                ret.put(toJSON(e));
-            }
-            return ret;
-        } else if (elm.getMap() != null) {
-            JSONObject ret = new JSONObject();
-            for (Entry<AnsString, AnsElement> e : elm.getMap().entrySet()) {
-                ret.put(e.getKey().getString(), toJSON(e.getValue()));
-            }
-            return ret;
-        }
-        return elm.getString();
-    }
+//
+//    private static Object toJSON(AnsElement elm) {
+//        if (elm.getList() != null) {
+//            JSONArray ret = new JSONArray();
+//            for (AnsElement e : elm.getList()) {
+//                ret.put(toJSON(e));
+//            }
+//            return ret;
+//        } else if (elm.getMap() != null) {
+//            JSONObject ret = new JSONObject();
+//            for (Entry<AnsString, AnsElement> e : elm.getMap().entrySet()) {
+//                ret.put(e.getKey().getString(), toJSON(e.getValue()));
+//            }
+//            return ret;
+//        }
+//        return elm.getString();
+//    }
 }

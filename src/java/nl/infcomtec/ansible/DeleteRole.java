@@ -51,19 +51,9 @@ public class DeleteRole extends HttpServlet {
                 top.push("body").setStyleElement("color", "darkred");
                 if (fubar.wasSet) {
                     deleteAll(roleDir);
-                    for (File f : books.directory.listFiles()) {
-                        if (!f.isDirectory() && f.getName().endsWith(".yml")) {
-                            AnsObject pb = new AnsObject(null, f);
-                            if (pb.removeElement(name.getValue())) {
-                                String ymlOut = pb.makeString();                                
-                                try (PrintWriter pw = new PrintWriter(f)) {
-                                    pw.print(ymlOut);
-                                }
-                            }
-                        }
-                    }
-                    top.appendA("index.jsp","All done, return me to the main page.");
-                    doc.write(out);
+                    //top.appendA("index.jsp","All done, return me to the main page.");
+                    response.sendRedirect("index.jsp");
+                    //doc.write(out);
                     return;
                 }
                 books.scan();
@@ -75,7 +65,7 @@ public class DeleteRole extends HttpServlet {
                 for (PlayBook b : books.playBooks.values()) {
                     if (b.roles.contains(name.getValue())) {
                         if (first) {
-                            top.appendP("This will remove the role from these playbooks:");
+                            top.appendP("This will invalidate the role in these playbooks:");
                             top.push("UL");
                             first = false;
                         }

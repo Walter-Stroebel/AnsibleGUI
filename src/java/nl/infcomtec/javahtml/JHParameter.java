@@ -4,6 +4,7 @@
  */
 package nl.infcomtec.javahtml;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
@@ -17,7 +18,7 @@ public class JHParameter {
 
     /**
      * Prefix used to make a JHParameter semi-permanent by storing it in the
- Session.
+     * Session.
      */
     public final static String SESPREFIX = "par_";
     public final String varName;
@@ -48,6 +49,9 @@ public class JHParameter {
      * VALUES and save it to SESSION. Else if the SESSION has an attribute NAME,
      * use its VALUES. Else use the DEFAULT VALUES.
      *
+     * Also, web forms actually return (blech!) carriage returns! So strip
+     * those!
+     *
      * @param session From the request, may be null.
      * @param request The request.
      * @param name Name of the Parameter.
@@ -59,6 +63,24 @@ public class JHParameter {
         values = request.getParameterValues(varName);
         if (values != null) {
             wasSet = true;
+            ArrayList<StringBuilder> v2 = new ArrayList<>();
+            for (String v : values) {
+                if (v.indexOf('\r') >= 0) {
+                    StringBuilder crLess = new StringBuilder();
+                    for (char c : v.toCharArray()) {
+                        if (c != '\r') {
+                            crLess.append(c);
+                        }
+                    }
+                    v2.add(crLess);
+                } else {
+                    v2.add(new StringBuilder(v));
+                }
+            }
+            int i = 0;
+            for (StringBuilder sb : v2) {
+                values[i++] = sb.toString();
+            }
         } else {
             wasSet = false;
             if (session != null) {
@@ -75,26 +97,27 @@ public class JHParameter {
         setInSession(session);
     }
 
-    public final void setInSession(final HttpSession session){
+    public final void setInSession(final HttpSession session) {
         if (session != null) {
             if (values != null) {
                 session.setAttribute(SESPREFIX + varName, values);
             } else {
                 session.removeAttribute(SESPREFIX + varName);
             }
-        }        
+        }
     }
-    
+
     public static JHParameter overrideWasSet(JHParameter source, boolean wasSet) {
         return new JHParameter(source.varName, source.values, source.defValues, wasSet);
     }
 
     /**
      * Quick test if a JHParameter was not entered and did not have a non-empty
- default. Do not use this to test a "submit" type JHParameter, use wasSet
- instead. Note that a multi-value parameter will be returned as "empty".
+     * default. Do not use this to test a "submit" type JHParameter, use wasSet
+     * instead. Note that a multi-value parameter will be returned as "empty".
      *
-     * @return True only if a single-value JHParameter that has a non-empty value.
+     * @return True only if a single-value JHParameter that has a non-empty
+     * value.
      */
     public boolean isEmpty() {
         return values == null || (values.length == 1 && values[0].trim().isEmpty());

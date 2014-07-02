@@ -12,7 +12,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.JSONTokener;
 
 /**
  * Converts between YAML and JSON. Despite some rather major effort, I failed to
@@ -20,11 +19,23 @@ import org.json.JSONTokener;
  * matter). However, Ansible is Python and Python can convert between JSON and
  * YAML using the commands in this class. Problem solved.
  *
+ * Amended: not quite. Disabling all writing of YAML.
+ *
  * @author walter
  */
 public class YamlJson {
 
-    public void write(File f, String s) throws IOException {
+    public static void write(File f, String s) throws IOException {
+        if (s.indexOf('\r') >= 0) {
+            StringBuilder noCr = new StringBuilder(s);
+            for (int i = 0; i < noCr.length(); i++) {
+                if (noCr.charAt(i) == '\r') {
+                    noCr.delete(i, i + 1);
+                    i--;
+                }
+            }
+            s = noCr.toString();
+        }
         try (FileWriter fw = new FileWriter(f)) {
             fw.write(s);
         }
@@ -32,17 +43,6 @@ public class YamlJson {
 
     public void write(File f, Object obj) throws IOException {
         write(f, obj.toString());
-    }
-
-    public static String json2Yaml(FileReader json) throws IOException {
-        JSONTokener toker = new JSONTokener(json);
-        return json2Yaml(new JSONObject(toker));
-    }
-
-    public static String json2Yaml(File json) throws IOException {
-        try (FileReader fr = new FileReader(json)) {
-            return YamlJson.json2Yaml(fr);
-        }
     }
 
     public static Object yaml2Json(FileReader yaml) throws IOException {
@@ -93,37 +93,5 @@ public class YamlJson {
             return new JSONArray(sb.toString());
         }
         return new JSONObject(sb.toString());
-    }
-
-    public static String json2Yaml(final Object json) throws IOException {
-        // python -c 'import sys, yaml, json; yaml.dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)'
-        ProcessBuilder pb = new ProcessBuilder("python", "-c", "import sys, yaml, json; yaml.safe_dump(json.load(sys.stdin), sys.stdout, default_flow_style=False)");
-        pb.redirectErrorStream(true);
-        final Process p = pb.start();
-        new Thread() {
-            @Override
-            public void run() {
-                try {
-                    p.getOutputStream().write(json.toString().getBytes());
-                    p.getOutputStream().close();
-                } catch (IOException ex) {
-                    // oops
-                }
-            }
-        }.start();
-        StringBuilder sb = new StringBuilder();
-        try (BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
-            for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
-                sb.append(s);
-                sb.append('\n');
-            }
-        } finally {
-            try {
-                p.waitFor();
-            } catch (InterruptedException ex) {
-                // no need to wait any longer?
-            }
-        }
-        return sb.toString();
     }
 }

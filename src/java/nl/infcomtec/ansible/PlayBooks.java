@@ -7,6 +7,7 @@ package nl.infcomtec.ansible;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,14 +18,14 @@ import java.util.LinkedList;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.TreeSet;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.jsp.JspWriter;
-import nl.infcomtec.ansible.AnsString;
 import nl.infcomtec.javahtml.JHDocument;
 import nl.infcomtec.javahtml.JHFragment;
 import nl.infcomtec.javahtml.JHParameter;
 import nl.infcomtec.javahtml.Select;
-import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -53,8 +54,6 @@ public class PlayBooks {
     private JHParameter parMergeRole;
     private JHParameter parSubmitMergeRole;
     public AnsInventory inv;
-    private final JSONArray doc;
-    private JSONArray docIn;
     private final HttpServletRequest request;
     private final JspWriter out;
 
@@ -67,22 +66,6 @@ public class PlayBooks {
         this.directory = directory;
         dirPath = directory.getAbsolutePath();
         dirPathLen = dirPath.length() + 1;
-        File df = new File(directory, "doc.json");
-        if (df.exists()) {
-            try {
-                JSONTokener t = new JSONTokener(new FileInputStream(df));
-                docIn = new JSONArray(t);
-            } catch (Exception oops) {
-                // we tried
-                docIn = new JSONArray();
-            }
-            File bak = new File(directory, "doc.bak");
-            bak.delete();
-            df.renameTo(bak);
-        } else {
-            docIn = new JSONArray();
-        }
-        doc = new JSONArray();
     }
 
     /**
@@ -128,13 +111,13 @@ public class PlayBooks {
             frag.pop();
             frag.push("td");
             for (File f : e.definedIn) {
-                frag.appendA("EditYml?file=" + f.getAbsolutePath(), shortFileName(f));
+                frag.appendA("EditAny?file=" + f.getAbsolutePath(), shortFileName(f));
                 frag.createElement("br");
             }
             frag.pop();
             frag.push("td");
             for (File f : e.usedBy) {
-                frag.appendA("EditYml?file=" + f.getAbsolutePath(), shortFileName(f));
+                frag.appendA("EditAny?file=" + f.getAbsolutePath(), shortFileName(f));
                 frag.createElement("br");
             }
             frag.pop();
@@ -169,7 +152,7 @@ public class PlayBooks {
                 } else {
                     desc = "";
                 }
-                frag.appendA("EditYml?file=" + e.meta.inFile.getAbsolutePath(), descTitle);
+                frag.appendA("EditAny?file=" + e.meta.inFile.getAbsolutePath(), descTitle);
                 if (!desc.isEmpty()) {
                     frag.appendText(desc);
                 }
@@ -181,8 +164,8 @@ public class PlayBooks {
                 if (!first) {
                     frag.createElement("br");
                 }
-                frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), e2.name);
-                frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
+                frag.appendA("EditAny?file=" + e2.file.getAbsolutePath(), e2.name);
+                //frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
                 first = false;
             }
             frag.pop();
@@ -212,8 +195,8 @@ public class PlayBooks {
                 frag.createCheckBox(parSelectedTasks, selName);
                 frag.appendText(" ");
             }
-            frag.appendA("EditYml?file=" + e2.file.getAbsolutePath(), e2.name);
-            frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
+            frag.appendA("EditAny?file=" + e2.file.getAbsolutePath(), e2.name);
+            //frag.appendAImg("DeleteTask?file=" + e2.file.getAbsolutePath() + "&task=" + e2.name, "icons/delete.png");
             first = false;
         }
         frag.pop();
@@ -308,12 +291,6 @@ public class PlayBooks {
                 randomFiles.add(f);
             }
         }
-        {
-            File df = new File(directory, "doc.json");
-            try (PrintWriter pw = new PrintWriter(df)) {
-                pw.println(doc.toString(4));
-            }
-        }
     }
 
     private void roles(File roleDir) throws IOException {
@@ -329,15 +306,15 @@ public class PlayBooks {
             File fCre = new File(roleDir, "meta");
             fCre.mkdir();
             fCre = new File(fCre, "main.yml");
-            try (PrintWriter pw = new PrintWriter(fCre)) {
-                pw.println("galaxy_info:");
-                pw.println("  min_ansible_version: 1.4");
-                pw.println("  platforms:");
-                pw.println("  - name: EL");
-                pw.println("    versions:");
-                pw.println("    - 6.5");
-                pw.println("  description: 'Please document me!'");
-            }
+            StringBuilder sb = new StringBuilder();
+            sb.append("galaxy_info:\n");
+            sb.append("  min_ansible_version: 1.4\n");
+            sb.append("  platforms:\n");
+            sb.append("  - name: EL\n");
+            sb.append("    versions:\n");
+            sb.append("    - 6.5\n");
+            sb.append("  description: 'Please document me!'\n");
+            YamlJson.write(fCre, sb.toString());
             try {
                 role.meta = new AnsObject(this, fCre);
             } catch (Exception ex) {
@@ -590,6 +567,9 @@ public class PlayBooks {
         doc.write(out);
     }
 
+    /**
+     * @deprecated Can't write YAML
+     */
     public void processEditRoleForm() throws Exception {
         parEditRole = new JHParameter(request, "editRole", "");
         parMoveTasksToNewRole = new JHParameter(request, "moveTasksToNewRole", "");
@@ -636,13 +616,13 @@ public class PlayBooks {
                     if (keepFile.exists()) {
                         AnsObject keepObj = new AnsObject(null, keepFile);
                         keepObj.getList().add(e.map);
-                        try (PrintWriter pw = new PrintWriter(keepFile)) {
-                            pw.print(keepObj.makeString());
-                        }
+//                        try (PrintWriter pw = new PrintWriter(keepFile)) {
+//                            pw.print(keepObj.makeString());
+//                        }
                     } else {
-                        try (PrintWriter pw = new PrintWriter(keepFile)) {
-                            pw.print(AnsObject.makeString(e.map));
-                        }
+//                        try (PrintWriter pw = new PrintWriter(keepFile)) {
+//                            pw.print(AnsObject.makeString(e.map));
+//                        }
                     }
                 }
             }
@@ -660,9 +640,9 @@ public class PlayBooks {
                 for (Task t : rMerge.tasks) {
                     tmp.add(t.map);
                 }
-                try (PrintWriter pw = new PrintWriter(new File(keepTaskDir, "main.yml"))) {
-                    pw.print(AnsObject.makeString(tmp));
-                }
+//                try (PrintWriter pw = new PrintWriter(new File(keepTaskDir, "main.yml"))) {
+//                    pw.print(AnsObject.makeString(tmp));
+//                }
             }
             // merge any vars
             {
@@ -675,13 +655,13 @@ public class PlayBooks {
                         if (keepFile.exists()) {
                             AnsObject keepObj = new AnsObject(null, keepFile);
                             keepObj.getMap().putAll(mergeObj.getMap());
-                            try (PrintWriter pw = new PrintWriter(keepFile)) {
-                                pw.print(keepObj.makeString());
-                            }
+//                            try (PrintWriter pw = new PrintWriter(keepFile)) {
+//                                pw.print(keepObj.makeString());
+//                            }
                         } else {
-                            try (PrintWriter pw = new PrintWriter(keepFile)) {
-                                pw.print(mergeObj.makeString());
-                            }
+//                            try (PrintWriter pw = new PrintWriter(keepFile)) {
+//                                pw.print(mergeObj.makeString());
+//                            }
                         }
                     }
                 }
@@ -689,6 +669,10 @@ public class PlayBooks {
         }
     }
 
+    /**
+     * @deprecated Can't write YAML.
+     * @throws IOException
+     */
     private void moveTasksToNewRole() throws IOException {
         Role rOld = new Role(parEditRole.getValue());
         Role rNew = new Role(parMoveTasksToNewRole.getValue());
@@ -723,24 +707,28 @@ public class PlayBooks {
                 for (Task t : rNew.tasks) {
                     tmp.add(t.map);
                 }
-                try (PrintWriter pw = new PrintWriter(newTaskF)) {
-                    pw.print(AnsObject.makeString(tmp));
-                }
+//                try (PrintWriter pw = new PrintWriter(newTaskF)) {
+//                    pw.print(AnsObject.makeString(tmp));
+//                }
             }
             {
                 AnsList tmp = new AnsList();
                 for (Task t : rOld.tasks) {
                     tmp.add(t.map);
                 }
-                try (PrintWriter pw = new PrintWriter(oldTaskF)) {
-                    pw.print(AnsObject.makeString(tmp));
-                }
+//                try (PrintWriter pw = new PrintWriter(oldTaskF)) {
+//                    pw.print(AnsObject.makeString(tmp));
+//                }
             }
             parMoveTasksToNewRole = parMoveTasksToNewRole.clear();
             parSelectedTasks = parSelectedTasks.clear();
         }
     }
 
+    /**
+     * @deprecated Can't write YAML.
+     * @throws Exception
+     */
     public void processNewPlayBookForm() throws Exception {
         parNewPlayBook = new JHParameter(request, "newPlayBook", "");
         parAddPlaybookRoles = new JHParameter(request, "addPlaybookRoles", "");
@@ -775,13 +763,13 @@ public class PlayBooks {
                         }
                     }
                 }
-                try (FileWriter writer = new FileWriter(newFile)) {
-                    AnsMap rm = new AnsMap();
-                    rm.put(new AnsString("roles"), rolez);
-                    AnsList wl = new AnsList();
-                    wl.add(rm);
-                    writer.write(AnsObject.makeString(wl));
-                }
+//                try (FileWriter writer = new FileWriter(newFile)) {
+//                    AnsMap rm = new AnsMap();
+//                    rm.put(new AnsString("roles"), rolez);
+//                    AnsList wl = new AnsList();
+//                    wl.add(rm);
+//                    writer.write(AnsObject.makeString(wl));
+//                }
             }
             parNewPlayBook = parNewPlayBook.clear();
             parAddPlaybookRoles = parAddPlaybookRoles.clear();
@@ -947,42 +935,67 @@ public class PlayBooks {
         doc.write(out);
     }
 
-    public String getDoc(File f, String requestParameter) {
-        String sf = shortFileName(f);
-        JSONObject o = null;
-        for (int i = 0; i < docIn.length(); i++) {
-            o = docIn.getJSONObject(i);
-            if (o.getString("file").equals(sf)) {
-                docIn.remove(i);
-                break;
-            }
-            o = null;
-        }
-        if (o == null) {
-            for (int i = 0; i < doc.length(); i++) {
-                o = doc.getJSONObject(i);
-                if (o.getString("file").equals(sf)) {
+    public String getDoc(File f, String requestParameter) throws IOException {
+        StringBuilder desc = new StringBuilder();
+        try (BufferedReader md = new BufferedReader(new FileReader(f))) {
+            for (String s = md.readLine(); s != null; s = md.readLine()) {
+                if (s.startsWith("# ")) {
+                    desc.append(s.substring(2));
+                    desc.append("\n");
+                } else if (s.startsWith("#")) {
+                    desc.append(s.substring(1));
+                    desc.append("\n");
+                } else {
                     break;
                 }
-                o = null;
             }
-        } else {
-            doc.put(o);
         }
-        String desc = o != null ? o.getString("desc") : "";
         if (request != null) {
-            JHParameter pDesc = new JHParameter(request, requestParameter, desc);
-            desc = pDesc.getValue();
+            JHParameter pDesc = new JHParameter(request, requestParameter, desc.toString());
+            String nDesc = pDesc.getValue();
+            if (nDesc != null) {
+                nDesc = nDesc.trim();
+            } else {
+                nDesc = "";
+            }
+            if (!nDesc.equals(desc.toString().trim())) {
+                File rewrite = new File(directory, f.getName() + "_");
+                try (PrintWriter pw = new PrintWriter(rewrite)) {
+                    for (String s : nDesc.split("\n")) {
+                        pw.println("# " + s);
+                    }
+                    boolean blank = false;
+                    try (BufferedReader md = new BufferedReader(new FileReader(f))) {
+                        for (String s = md.readLine(); s != null; s = md.readLine()) {
+                            if (!s.startsWith("#")) {
+                                if (!s.trim().isEmpty()) {
+                                    pw.println();
+                                    pw.println(s);
+                                    blank = true;
+                                    break;
+                                }
+                            }
+                        }
+                        if (!blank) {
+                            for (String s = md.readLine(); s != null; s = md.readLine()) {
+                                if (!s.trim().isEmpty()) {
+                                    pw.println();
+                                    pw.println(s);
+                                    break;
+                                }
+                            }
+                        }
+                        for (String s = md.readLine(); s != null; s = md.readLine()) {
+                            pw.println(s);
+                        }
+                    }
+                }
+                f.delete();
+                rewrite.renameTo(f);
+                desc = new StringBuilder(nDesc);
+            }
         }
-        if (o == null) {
-            o = new JSONObject();
-            o.put("file", sf);
-            o.put("desc", desc);
-            doc.put(o);
-        } else {
-            o.put("desc", desc);
-        }
-        return o.getString("desc");
+        return desc.toString();
     }
 
     public String makeId(File f) {

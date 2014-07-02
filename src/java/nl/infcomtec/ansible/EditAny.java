@@ -37,10 +37,11 @@ public class EditAny extends HttpServlet {
         response.setContentType("text/html;charset=UTF-8");
         String fnam = request.getParameter("file");
         if (request.getParameter("save") != null) {
-            try (PrintWriter pw = new PrintWriter(new File(fnam))) {
-                pw.print(request.getParameter("edit"));
+            YamlJson.write(new File(fnam), request.getParameter("edit"));
+//            try (PrintWriter pw = new PrintWriter(new File(fnam))) {
+//                pw.print(request.getParameter("edit"));
                 response.sendRedirect("index.jsp");
-            }
+//            }
         }
         try (PrintWriter out = response.getWriter()) {
             out.println("<!DOCTYPE html>");
@@ -57,9 +58,6 @@ public class EditAny extends HttpServlet {
             out.println("<body>");
             out.println("<form action=\"EditAny\" method=\"POST\">");
             out.println("<input type=\"hidden\" name=\"file\" value=\"" + fnam + "\" />");
-            if (request.getParameter("warn") != null) {
-                out.println("<h1 style=\"background-color: red; color: white;\">You were send here from the YAML editor ... fix this file?</h1>");
-            }
             out.println("<h1>" + fnam + "</h1>");
             File f = new File(fnam);
             boolean can = UnixFile.isItASCII(f);
@@ -67,7 +65,7 @@ public class EditAny extends HttpServlet {
                 out.println("<textarea name=\"edit\" rows=\"36\" cols=\"150\">");
                 try (BufferedReader bfr = new BufferedReader(new FileReader(f))) {
                     for (String tmp = bfr.readLine(); tmp != null; tmp = bfr.readLine()) {
-                        out.println(JHFragment.html(tmp.toString()));
+                        out.println(JHFragment.html(tmp));
                     }
                 }
                 out.println("</textarea><br />");

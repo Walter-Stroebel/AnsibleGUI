@@ -8,12 +8,10 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import nl.infcomtec.ansible.AnsString;
 
 /**
  *
@@ -87,9 +85,9 @@ public class AnsInventory {
                         for (Map.Entry<AnsString, AnsElement> e : gvars.entrySet()) {
                             map.put(e.getKey(), e.getValue());
                         }
-                        try (PrintWriter pw = new PrintWriter(gf)) {
-                            pw.print(AnsObject.makeString(map));
-                        }
+//                        try (PrintWriter pw = new PrintWriter(gf)) {
+//                            pw.print(AnsObject.makeString(map));
+//                        }
                     } else {
                         group = s.substring(1, s.length() - 1);
                     }
@@ -160,9 +158,9 @@ public class AnsInventory {
                         for (Map.Entry<AnsString, AnsElement> e : hvars.entrySet()) {
                             map.put(e.getKey(), e.getValue());
                         }
-                        try (PrintWriter pw = new PrintWriter(hf)) {
-                            pw.print(AnsObject.makeString(map));
-                        }
+//                        try (PrintWriter pw = new PrintWriter(hf)) {
+//                            pw.print(AnsObject.makeString(map));
+//                        }
                     }
                 }
             }

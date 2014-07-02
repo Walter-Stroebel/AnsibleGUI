@@ -91,12 +91,12 @@
                 }
                 if (!ansPath.isEmpty()) {
                     PlayBooks books = new PlayBooks(new File(ansPath), request, out);
-                    books.processNewPlayBookForm();
-                    books.processEditRoleForm();
+                    //books.processNewPlayBookForm();
+                    //books.processEditRoleForm();
                     books.processEditInventory(ansInv);
                     books.scan();
-                    books.writeNewPlayBookForm();
-                    books.writeEditRoleForm();
+                    //books.writeNewPlayBookForm();
+                    //books.writeEditRoleForm();
                     books.writeEditInventory();
             %>
             <div style="clear: both;" > </div>

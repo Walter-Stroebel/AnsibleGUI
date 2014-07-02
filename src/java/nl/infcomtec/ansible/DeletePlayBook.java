@@ -4,10 +4,12 @@
  */
 package nl.infcomtec.ansible;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.io.StringWriter;
 import javax.servlet.ServletException;
 import javax.servlet.annotation.WebServlet;
 import javax.servlet.http.HttpServlet;
@@ -41,7 +43,6 @@ public class DeletePlayBook extends HttpServlet {
             JHParameter fubar = new JHParameter(request, "fubar", "Yes, make it so!");
             JHParameter file = new JHParameter(request, "file");
             File tFile = new File(file.getValue());
-            AnsObject tObj = new AnsObject(null, tFile);
             JHDocument doc = new JHDocument();
             JHFragment top = new JHFragment(doc, "html");
             top.push("head");
@@ -57,9 +58,14 @@ public class DeletePlayBook extends HttpServlet {
             top.push("form");
             top.appendAttr("action", "DeletePlayBook").appendAttr("method", "POST");
             top.createInput("hidden", file);
-            String myw = tObj.makeString();
             top.appendP("Delete playbook [" + tFile.getAbsolutePath() + "]?");
-            top.createElement("pre").appendText(myw.toString());
+            top.push("pre");
+            //.appendText(myw.toString());
+            try (BufferedReader bfr = new BufferedReader(new FileReader(tFile))){
+                for (String line = bfr.readLine();line!=null;line=bfr.readLine()){
+                    top.appendText(line+'\n');
+                }
+            }
             top.createInput("submit", fubar).setStyleElement("font-size", "larger");
             top.appendA("index.jsp", "(Else just return to the main page here).");
             doc.write(out);

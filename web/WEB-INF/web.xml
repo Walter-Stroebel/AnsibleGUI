@@ -7,11 +7,6 @@ about 32 K in size.</description>
         <servlet-class>nl.infcomtec.ansible.EditAny</servlet-class>
     </servlet>
     <servlet>
-        <description>Edit any YAML file.</description>
-        <servlet-name>EditYml</servlet-name>
-        <servlet-class>nl.infcomtec.ansible.EditYml</servlet-class>
-    </servlet>
-    <servlet>
         <description>Very minimal GIT support.</description>
         <servlet-name>MiniGIT</servlet-name>
         <servlet-class>nl.infcomtec.ansible.MiniGIT</servlet-class>
@@ -19,10 +14,6 @@ about 32 K in size.</description>
     <servlet>
         <servlet-name>DeleteTask</servlet-name>
         <servlet-class>nl.infcomtec.ansible.DeleteTask</servlet-class>
-    </servlet>
-    <servlet>
-        <servlet-name>DeleteRole</servlet-name>
-        <servlet-class>nl.infcomtec.ansible.DeleteRole</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>DeletePlayBook</servlet-name>
@@ -37,20 +28,12 @@ about 32 K in size.</description>
         <url-pattern>/EditAny</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
-        <servlet-name>EditYml</servlet-name>
-        <url-pattern>/EditYml</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
         <servlet-name>MiniGIT</servlet-name>
         <url-pattern>/MiniGIT</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>DeleteTask</servlet-name>
         <url-pattern>/DeleteTask</url-pattern>
-    </servlet-mapping>
-    <servlet-mapping>
-        <servlet-name>DeleteRole</servlet-name>
-        <url-pattern>/DeleteRole</url-pattern>
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>DeletePlayBook</servlet-name>

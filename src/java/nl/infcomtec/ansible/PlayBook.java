@@ -25,13 +25,13 @@ public class PlayBook {
     public final AnsMap others=new AnsMap();
     public final PlayBooks owner;
     private final String parName;
-    private final String desc;
+    private final StringBuilder _desc;
 
     public PlayBook(PlayBooks owner, File f, AnsList list) throws IOException {
         this.owner = owner;
         this.inFile = f;
         this.parName = "desc_" + owner.makeId(f);
-        this.desc = owner.getDoc(f, parName);
+        this._desc = new StringBuilder(owner.getDoc(f, parName));
         for (AnsElement elm : list) {
             AnsMap map = elm.getMap();
             if (map != null) {
@@ -122,7 +122,7 @@ public class PlayBook {
             top.appendText(" ");
         }
         top.createElement("A").appendAttr("id", inFile.getName());
-        JHFragment link = top.appendA("EditYml?file=" + inFile.getAbsolutePath(), "Playbook -> " + owner.shortFileName(inFile));
+        JHFragment link = top.appendA("EditAny?file=" + inFile.getAbsolutePath(), "Playbook -> " + owner.shortFileName(inFile));
         top.appendAImg("DeletePlayBook?file=" + inFile.getAbsolutePath(), "icons/delete.png");
         if (!expandP.wasSet) {
             top.createElement("hr");
@@ -132,7 +132,7 @@ public class PlayBook {
             area.appendAttr("name", parName).setStyleElement("background-color", "white");
             area.appendAttr("rows", "10");
             area.appendAttr("cols", "100");
-            area.appendText(desc);
+            area.appendText(_desc.toString());
             top.createElement("input").appendAttr("type", "submit").appendAttr("value", "Update description").removeStyleElement("background-color");
             top.pop();
             top.push("ul");
@@ -159,12 +159,12 @@ public class PlayBook {
                         top.appendTD(rd.name);
                         top.push("td");
                         for (Task e : rd.tasks) {
-                            top.appendA("EditYml?file=" + e.file.getAbsolutePath(), e.name);
+                            top.appendA("EditAny?file=" + e.file.getAbsolutePath(), e.name);
                             top.createElement("br");
                         }
                         top.pop().push("td");
                         for (Map.Entry<String, RoleFileMap> e : rd.handlers.entrySet()) {
-                            top.appendA("EditYml?file=" + e.getValue().file.getAbsolutePath(), e.getKey());
+                            top.appendA("EditAny?file=" + e.getValue().file.getAbsolutePath(), e.getKey());
                             top.createElement("br");
                         }
                         top.pop().push("td");
