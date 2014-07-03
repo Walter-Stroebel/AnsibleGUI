@@ -22,7 +22,7 @@ public class PlayBook {
     public final File inFile;
     public final ArrayList<String> roles = new ArrayList<>();
     public final ArrayList<String> tasks = new ArrayList<>();
-    public final AnsMap others=new AnsMap();
+    public final AnsList others = new AnsList();
     public final PlayBooks owner;
     private final String parName;
     private final StringBuilder _desc;
@@ -63,7 +63,9 @@ public class PlayBook {
                                 AnsVariable.addOrUpdate(parRole.vars, f, rmap, null);
                                 owner.roles.put(rname.getString(), parRole);
                             }
-                        }// else ignore it, a list here?
+                        } else {
+                            throw new RuntimeException("Did not expect a list here.");
+                        }
                     }
                     roles.addAll(l);
                 }
@@ -78,7 +80,9 @@ public class PlayBook {
                     }
                 }
             }
-            others.putAll(map);
+            if (!map.isEmpty()) {
+                others.add(map);
+            }
         }
     }
 

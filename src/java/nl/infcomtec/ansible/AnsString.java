@@ -18,8 +18,7 @@ public class AnsString implements AnsElement, Comparable<AnsString> {
 
     @Override
     public String toString() {
-        throw new RuntimeException("I don't think you want this");
-        //return "\nAnsString{" + "s=" + s + '}';
+        return "AnsString{" + "s=" + s + '}';
     }
 
     /**
