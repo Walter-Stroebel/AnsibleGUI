@@ -52,16 +52,16 @@ public class MiniGIT extends HttpServlet {
                 html.pop();
                 html.push("body");
                 html.push("form").appendAttr("action", "MiniGIT").appendAttr("method", "POST");
-                html.appendP("(Very) minimal GIT support.");
+                html.appendP("(Very) minimal GIT(hub/bitbucket) support.");
                 html.appendA("index.jsp", "(Or return to the editor if done here).");
-                html.appendP("Just supports the standard work-flow of"
-                        + " [git pull origin master],[edit],[git add -A .], [git commit -a -m'what I did'],[git push origin master]");
+                html.appendP("Just supports the standard work-flow of [git status], "
+                        + " [git pull origin master],[edit],[git add -A], [git commit -a -m'what I did'],[git push origin master]");
                 html.appendP("In other words, this will only work if:");
                 html.push("ul");
                 html.appendLI("You have GIT installed and accessible to the Tomcat user.");
                 html.appendLI("You have GIT set up to pull/push from/to a remote without asking for anything, not even a password.");
                 html.appendLI("You did not introduce any conflicts.");
-                html.appendLI("You used standard names 'origin' and 'master'.");
+                html.appendLI("You used default names 'origin' and 'master'.");
                 html.pop();
                 html.createInput("submit", pull);
                 html.createInput("submit", push);
@@ -75,19 +75,21 @@ public class MiniGIT extends HttpServlet {
                     html.push("pre");
                     html.appendText(doPull(ansPath));
                     html.pop();
-                }
-                if (push.wasSet) {
+                } else if (push.wasSet) {
                     html.push("pre");
                     html.appendText(doPush(ansPath));
                     html.pop();
-                }
-                if (commit.wasSet) {
+                } else if (commit.wasSet) {
                     html.push("pre");
                     if (ctext.notEmpty()) {
                         html.appendText(doCommit(ansPath, ctext.getValue()));
                     } else {
                         html.appendText("You are required to enter a commit message.");
                     }
+                    html.pop();
+                } else {
+                    html.push("pre");
+                    html.appendText(doStatus(ansPath));
                     html.pop();
                 }
                 html.pop("html");
@@ -136,6 +138,27 @@ public class MiniGIT extends HttpServlet {
     public String getServletInfo() {
         return "Short description";
     }// </editor-fold>
+
+    private String doStatus(String ansPath) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("git", "status");
+            pb.redirectErrorStream(true);
+            pb.directory(new File(ansPath));
+            Process p = pb.start();
+            StringBuilder ret = new StringBuilder();
+            try (BufferedReader bfr = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                for (String s = bfr.readLine(); s != null; s = bfr.readLine()) {
+                    ret.append(s).append("\n");
+                }
+                return ret.toString();
+            } finally {
+                p.waitFor();
+            }
+        } catch (Exception all) {
+            // ignore, should not be critical
+        }
+        return "???";
+    }
 
     private String doPull(String ansPath) {
         try {
