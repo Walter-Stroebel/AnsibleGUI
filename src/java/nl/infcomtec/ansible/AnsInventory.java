@@ -43,6 +43,9 @@ public class AnsInventory {
             String group = "all";
             for (String _s = bfr.readLine(); _s != null; _s = bfr.readLine()) {
                 String s = _s.trim();
+                if (s.contains("#")){
+                    s=s.substring(0, s.indexOf('#'));
+                }
                 if (s.isEmpty() || s.startsWith("#") || s.startsWith(";")) {
                     continue;
                 }
